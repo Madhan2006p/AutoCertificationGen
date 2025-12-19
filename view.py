@@ -9,7 +9,7 @@ pd.set_option('display.width', None)
 conn = sqlite3.connect("forms_data.db")
 
 df = pd.read_sql_query(
-    "SELECT * FROM form_responses", conn
+    "SELECT * FROM participants", conn
 )
 
 conn.close()
