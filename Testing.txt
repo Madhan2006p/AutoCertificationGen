@@ -1,6 +1,0 @@
-admin-186@markus-481709.iam.gserviceaccount.com
-
-Conflicts : 
-1) Same name Conflicts = Add register number to identify the user 
-2) 1 person can have joined more than one events = Data aggregation want to be done (or) Based on multiple column selected we can do it , it need to generate all of the competition certificate at once When he/she give name and reg no 
-3) A person can register one time using their mail
