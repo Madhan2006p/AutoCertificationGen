@@ -33,15 +33,15 @@ df_clean = df[[
 
 df_clean.columns = ["roll_no", "name", "event"]
 
-
+df_clean["roll_no"] = df_clean["roll_no"].str.lower()
 df_clean["event"] = df_clean["event"].str.split(",")
 
 df_clean = df_clean.explode("event")
 
-# Remove extra spaces
+
 df_clean["event"] = df_clean["event"].str.strip()
 
-# Drop empty events
+
 df_clean = df_clean[df_clean["event"] != ""]
 
 print("Final rows after event split:", len(df_clean))
