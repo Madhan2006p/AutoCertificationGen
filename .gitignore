@@ -1,7 +1,5 @@
 markus.json
-forms_data.db
 __pycache__
 
 backend/markus.json
-backend/forms_data.db
 backend/__pycache__
