@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 
 def generate_certificate(name, roll_no, event):
-    img = Image.open("certificate_template.png")
+    img = Image.open("backend/certificate_template.png")
     draw = ImageDraw.Draw(img)
 
     # Fonts
@@ -38,7 +38,7 @@ def generate_certificate(name, roll_no, event):
 
 
     # Save certificate
-    filename = f"certificates/{roll_no}_{event.replace(' ', '_')}.png"
+    filename = f"backend/certificates/{roll_no}_{event.replace(' ', '_')}.png"
     img.save(filename)
 
     print("Generated:", filename)

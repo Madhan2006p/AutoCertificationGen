@@ -10,7 +10,7 @@ def refresh():
     ]
 
     creds = ServiceAccountCredentials.from_json_keyfile_name(
-        "markus.json", scope
+        "backend/markus.json", scope
     )
     client = gspread.authorize(creds)
 
