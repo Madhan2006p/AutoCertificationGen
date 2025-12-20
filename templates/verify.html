@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Verification</title>
+</head>
+<body>
+{% if status == "valid" %}
+    <h2>✅ Certificate Verified</h2>
+
+    {% for r in records %}
+        <p>
+            {{ r.name }} ({{ r.roll_no }}) – {{ r.event }}
+            <a href="/download?roll={{ r.roll_no }}&event={{ r.event }}">
+                Download Certificate
+            </a>
+        </p>
+    {% endfor %}
+
+{% else %}
+    <h2>❌ Certificate Not Found</h2>
+{% endif %}
+</body>
+</html>

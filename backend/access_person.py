@@ -2,9 +2,10 @@ import pandas as pd
 from backend.genCertificate import generate_certificate
 import sqlite3
 
-conn = sqlite3.connect("forms_data.db")
+
 
 def get_user_by_reg(reg):
+    conn = sqlite3.connect("forms_data.db")
     query = """
         SELECT * 
         FROM participants 
@@ -18,7 +19,7 @@ def get_user_by_reg(reg):
             event=row["event"]
         )
     conn.close()
-    print(df)
+    return df
 
 
 
