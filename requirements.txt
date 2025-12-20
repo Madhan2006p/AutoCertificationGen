@@ -1,0 +1,6 @@
+flask
+pandas
+sqlite3
+pillow
+gspread
+oauth2client
