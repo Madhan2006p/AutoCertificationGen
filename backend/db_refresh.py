@@ -40,14 +40,16 @@ def refresh():
     df_clean = df[[
         "ROLL NO",
         "NAME",
+        "YEAR",
         "EVENTS"
     ]].copy()
 
 
-    df_clean.columns = ["roll_no", "name", "event"]
+    df_clean.columns = ["roll_no", "name", "year" ,"event"]
 
     df_clean["roll_no"] = df_clean["roll_no"].str.lower()
     df_clean["event"] = df_clean["event"].str.split(",")
+    
 
     df_clean = df_clean.explode("event")
 
