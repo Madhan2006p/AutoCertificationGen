@@ -14,7 +14,7 @@ def generate_certificate(name, roll_no, event):
         event: Event name (e.g., "Paper Presentation", "Project Demo")
     """
     # Load template
-    img = Image.open("Quantumfest.png")
+    img = Image.open("backend/Quantumfest.png")
     draw = ImageDraw.Draw(img)
     
     # Get image dimensions for reference
@@ -83,27 +83,12 @@ def generate_certificate(name, roll_no, event):
     )
 
     # Create output directory if it doesn't exist
-    os.makedirs("certificates", exist_ok=True)
+    os.makedirs("backend/certificates", exist_ok=True)
     
     # Save certificate (PNG format - quality/dpi not needed for PNG)
-    filename = f"certificates/{roll_no}_{event.replace(' ', '_')}.png"
+    filename = f"backend/certificates/{roll_no}_{event.replace(' ', '_')}.png"
     img.save(filename)
     
     print(f"✓ Certificate generated: {filename}")
     return filename
 
-
-# Example usage
-if __name__ == "__main__":
-    # Test with sample data
-    generate_certificate(
-        name="JOHN DOE",
-        roll_no="22PG001",
-        event="Paper Presentation"
-    )
-    
-    generate_certificate(
-        name="JANE SMITH",
-        roll_no="22PG002",
-        event="Project Demonstration"
-    )
