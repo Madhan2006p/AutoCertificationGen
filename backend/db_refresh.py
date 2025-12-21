@@ -15,13 +15,26 @@ def refresh():
     client = gspread.authorize(creds)
 
 
-    SHEET_NAME = "TALENT SHOW -QUANTUM FEST 2K25 (Responses)"
+    SHEET_NAME = "Quantum"
     sheet = client.open(SHEET_NAME).sheet1
 
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
 
     print("Fetched Rows:", len(df))
+
+    # 🔥 FIX: Flatten tuple / multi-index columns
+    if isinstance(df.columns[0], tuple):
+        df.columns = df.columns[0]
+    # df.columns == ['S. NO', 'ROLL NO', 'NAME', 'YEAR', 'EVENTS']
+
+    df.columns = (
+    pd.Index(df.columns)
+      .astype(str)
+      .str.strip()
+      .str.replace("\n", " ", regex=False)
+      .str.upper()
+)
 
 
     df_clean = df[[
