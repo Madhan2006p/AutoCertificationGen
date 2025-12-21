@@ -2,28 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Certificate Verification</title>
+    <title>Quantum Fest 2K25 | Certificate Portal</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f1e3c, #1a2c5b);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            color: #333;
         }
 
         .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 350px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: #ffffff;
+            padding: 35px;
+            border-radius: 14px;
+            width: 380px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
             text-align: center;
         }
 
-        h2 {
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1a2c5b;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #555;
             margin-bottom: 20px;
+        }
+
+        .event {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .portal {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        .steps {
+            background: #f4f6f8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .steps strong {
+            color: #1a2c5b;
         }
 
         input {
@@ -31,6 +68,8 @@
             padding: 12px;
             margin: 15px 0;
             font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
         }
 
         button {
@@ -41,29 +80,52 @@
             color: white;
             border: none;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 6px;
+            font-weight: 600;
         }
 
         button:hover {
             background: #0f1e3c;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Certificate Verification</h2>
+
+    <div class="title">Quantum Fest 2K25</div>
+    <div class="subtitle">By Association of CT-PG</div>
+
+    <div class="event">Certificate Download Portal</div>
+    <div class="portal">Official Participation Certificate Verification</div>
+
+    <div class="steps">
+        <strong>Steps to Download Certificate:</strong><br><br>
+        1️⃣ Enter your <b>Roll Number</b><br>
+        2️⃣ Your certificate details will be displayed<br>
+        3️⃣ Click <b>Download</b> to get your certificate
+    </div>
 
     <form action="/verify" method="get">
         <input
             type="text"
             name="roll"
-            placeholder="Enter Roll Number"
+            placeholder="Enter Roll Number (e.g., 24isr008)"
             required
         >
-
-        <button type="submit">Verify Certificate</button>
+        <button type="submit">Verify & Download</button>
     </form>
+
+    <div class="footer">
+        © Quantum Fest 2K25 | CT-PG Association
+    </div>
+
 </div>
 
 </body>

@@ -20,9 +20,6 @@ def generate_certificate(name, roll_no, event):
     # Get image dimensions for reference
     img_width, img_height = img.size
     print(f"Template size: {img_width}x{img_height}")
-    print("BASE_DIR:", BASE_DIR)
-    print("FONT_DIR:", FONT_DIR)
-    print("Font exists:", os.path.exists(os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf")))
     # Load fonts with appropriate sizes
     # Name font - bold, medium size
     font_name = ImageFont.truetype(
