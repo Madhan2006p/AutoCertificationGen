@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(__file__)
 FONT_DIR = os.path.join(BASE_DIR, "fonts")
 
 def generate_certificate(name, roll_no, event):
@@ -20,19 +20,21 @@ def generate_certificate(name, roll_no, event):
     # Get image dimensions for reference
     img_width, img_height = img.size
     print(f"Template size: {img_width}x{img_height}")
-
+    print("BASE_DIR:", BASE_DIR)
+    print("FONT_DIR:", FONT_DIR)
+    print("Font exists:", os.path.exists(os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf")))
     # Load fonts with appropriate sizes
     # Name font - bold, medium size
     font_name = ImageFont.truetype(
-        os.path.join(FONT_DIR, "arial.ttf"), 50
+       os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"), 50
     )
     # Roll number font - regular, smaller
     font_roll = ImageFont.truetype(
-        os.path.join(FONT_DIR, "arial.ttf"), 45
+        os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"), 45
     )
     # Event name font - bold, larger
     font_event = ImageFont.truetype(
-        os.path.join(FONT_DIR, "arial.ttf"), 45
+        os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"), 45
     )
 
     # Text preparation
@@ -44,7 +46,7 @@ def generate_certificate(name, roll_no, event):
     # These positions are calculated from the template analysis
     
     # Name position - after "This is to certify that Mr./Ms. "
-    NAME_X = 1143
+    NAME_X = 1140
     NAME_Y = 666
     
     # Roll number position - on the second blank line after "of ____"
