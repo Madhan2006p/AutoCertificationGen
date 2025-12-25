@@ -36,7 +36,7 @@ def generate_certificate(name, roll_no, event , year):
 
     # Text preparation
     name_text = name.upper()
-    year_text = year.upper()
+    year_text = (year.upper() + "Yr")
     event_text = event.upper()
 
     # POSITION COORDINATES (based on certificate layout)
@@ -47,7 +47,7 @@ def generate_certificate(name, roll_no, event , year):
     NAME_Y = 666
     
     # Roll number position - on the second blank line after "of ____"
-    ROLL_X = 290
+    ROLL_X = 223
     ROLL_Y = 770
     
     # Event name position - on the second blank line after "has participated in ____"
