@@ -16,7 +16,8 @@ def get_user_by_reg(reg):
         generate_certificate(
             name=row["name"],
             roll_no=row["roll_no"],
-            event=row["event"]
+            event=row["event"] ,
+            year = row["year"] 
         )
     conn.close()
     return df

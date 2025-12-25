@@ -4,7 +4,7 @@ import os
 BASE_DIR = os.path.dirname(__file__)
 FONT_DIR = os.path.join(BASE_DIR, "fonts")
 
-def generate_certificate(name, roll_no, event):
+def generate_certificate(name, roll_no, event , year):
     """
     Generate certificate with precise text positioning
     
@@ -27,7 +27,7 @@ def generate_certificate(name, roll_no, event):
     )
     # Roll number font - regular, smaller
     font_roll = ImageFont.truetype(
-        os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"), 45
+        os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"), 51
     )
     # Event name font - bold, larger
     font_event = ImageFont.truetype(
@@ -36,7 +36,7 @@ def generate_certificate(name, roll_no, event):
 
     # Text preparation
     name_text = name.upper()
-    roll_text = roll_no
+    year_text = year.upper()
     event_text = event.upper()
 
     # POSITION COORDINATES (based on certificate layout)
@@ -47,8 +47,8 @@ def generate_certificate(name, roll_no, event):
     NAME_Y = 666
     
     # Roll number position - on the second blank line after "of ____"
-    ROLL_X = 218
-    ROLL_Y = 783
+    ROLL_X = 290
+    ROLL_Y = 770
     
     # Event name position - on the second blank line after "has participated in ____"
     EVENT_X = 1044
@@ -66,7 +66,7 @@ def generate_certificate(name, roll_no, event):
     # Draw roll number (black color)
     draw.text(
         (ROLL_X, ROLL_Y),
-        roll_text,
+        year_text,
         fill="black",
         font=font_roll,
         anchor="lt"
