@@ -15,7 +15,7 @@ def refresh():
     client = gspread.authorize(creds)
 
 
-    SHEET_NAME = "Quantum"
+    SHEET_NAME = "QuantumFinalList"
     sheet = client.open(SHEET_NAME).sheet1
 
     data = sheet.get_all_records()
