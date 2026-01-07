@@ -5,3 +5,6 @@ gspread
 oauth2client
 fastapi
 uvicorn
+redis
+rq
+python-dotenv
