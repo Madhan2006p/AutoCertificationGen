@@ -1,42 +1,48 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.templating import Jinja2Templates
 from backend import access_person as ap
-from flask import Flask , request , render_template , send_file , abort
 import os
+import uvicorn
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+templates = Jinja2Templates(directory="templates")
 
-@app.route("/verify")
-def verify():
-    roll = request.args.get("roll")
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/verify", response_class=HTMLResponse)
+async def verify(request: Request, roll: str = None):
     if not roll:
-        return "Invalid QR code", 400
+        return HTMLResponse(content="Invalid QR code", status_code=400)
 
     roll = roll.lower()
 
     data = ap.get_user_by_reg(roll)
 
     if data.empty:
-        return render_template("verify.html", status="invalid")
+        return templates.TemplateResponse("verify.html", {"request": request, "status": "invalid"})
 
-    return render_template(
+    return templates.TemplateResponse(
         "verify.html",
-        status="valid",
-        roll=roll,
-        records=data.to_dict(orient="records")
+        {
+            "request": request,
+            "status": "valid",
+            "roll": roll,
+            "records": data.to_dict(orient="records")
+        }
     )
 
-@app.route("/download")
-def download():
-    roll = request.args.get("roll")
-    event = request.args.get("event")
-
+@app.get("/download")
+async def download(roll: str, event: str):
+    # Ensure event is string to avoid issues, though type hint enforces it mostly
     path = f"backend/certificates/{roll}_{event.replace(' ', '_')}.png"
-
-    return send_file(path, as_attachment=True)
+    
+    # send_file(as_attachment=True) equivalent is filename argument in FileResponse
+    return FileResponse(path, filename=f"{roll}_{event}.png")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -3,3 +3,5 @@ pandas
 pillow
 gspread
 oauth2client
+fastapi
+uvicorn
