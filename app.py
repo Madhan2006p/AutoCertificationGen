@@ -1,42 +1,69 @@
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from redis import Redis
-from rq import Queue
-from rq.job import Job
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from backend import access_person as ap
 import os
 import uvicorn
-from tasks import long_task
+import cloudinary
+import cloudinary.uploader
+import sqlite3
+import time
+from tasks import generate_and_upload_cert
 
+# Helper to check maintenance mode
+def is_maintenance():
+    try:
+        conn = sqlite3.connect("forms_data.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM settings WHERE key='maintenance'")
+        res = cursor.fetchone()
+        conn.close()
+        return res and res[0] == "true"
+    except Exception:
+        return False
+
+# Initialize Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+
+@app.middleware("http")
+async def maintenance_middleware(request: Request, call_next):
+    # Allow admin routes and health checks even in maintenance
+    if is_maintenance() and not request.url.path.startswith("/admin") and request.url.path != "/status":
+        return JSONResponse(
+            status_code=503,
+            content={"message": "Certificate portal is under maintenance for data syncing. Try again in 10 minutes."}
+        )
+    return await call_next(request)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 templates = Jinja2Templates(directory="templates")
 
-# Redis Connection
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-try:
-    redis_conn = Redis.from_url(redis_url)
-    queue = Queue("default", connection=redis_conn)
-except Exception as e:
-    print(f"Warning: Could not connect to Redis: {e}")
-    queue = None
-
-class JobRequest(BaseModel):
-    data: str
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 @app.get("/", response_class=HTMLResponse)
+@limiter.limit("10/minute")
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/verify", response_class=HTMLResponse)
+@limiter.limit("5/minute")
 async def verify(request: Request, roll: str = None):
     if not roll:
         return HTMLResponse(content="Invalid QR code", status_code=400)
 
     roll = roll.lower()
-
     data = ap.get_user_by_reg(roll)
 
     if data.empty:
@@ -53,43 +80,95 @@ async def verify(request: Request, roll: str = None):
     )
 
 @app.get("/download")
-async def download(roll: str, event: str):
-    path = f"backend/certificates/{roll}_{event.replace(' ', '_')}.png"
-    return FileResponse(path, filename=f"{roll}_{event}.png")
-
-# --- Architecture Implementation Endpoints ---
-
-@app.post("/api/process")
-async def process(job_request: JobRequest):
-    if not queue:
-         raise HTTPException(status_code=503, detail="Redis queue not available")
+@limiter.limit("3/minute")
+async def download(request: Request, roll: str, event: str):
+    """
+    Production-safe download logic with RACE CONDITION protection.
+    """
+    roll = roll.lower()
+    data = ap.get_user_by_reg(roll)
     
-    # Enqueue the job. We pass the function reference and arguments.
-    job = queue.enqueue(long_task, job_request.data)
+    if data.empty:
+        raise HTTPException(status_code=404, detail="User not eligible or not found.")
     
-    return {
-        "job_id": job.id,
-        "status": "queued",
-        "data_received": job_request.data
-    }
-
-@app.get("/api/status/{job_id}")
-async def job_status(job_id: str):
-    if not queue:
-         raise HTTPException(status_code=503, detail="Redis queue not available")
+    records = data.to_dict(orient="records")
+    user_record = next((r for r in records if r['event'] == event), None)
     
-    try:
-        job = Job.fetch(job_id, connection=redis_conn)
-    except Exception:
-        raise HTTPException(status_code=404, detail="Job not found")
+    if not user_record:
+        raise HTTPException(status_code=404, detail="Participation record not found for this event.")
 
-    return {
-        "job_id": job.id,
-        "status": job.get_status(),
-        "result": job.result
-    }
+    cert_url = user_record.get("cert_url")
+
+    # 1. Instant Redirect if already exists
+    if cert_url:
+        return RedirectResponse(cert_url)
+    
+    # 2. Prevent Race Condition: Atomically claim the generation
+    conn = sqlite3.connect("forms_data.db", timeout=10)
+    cursor = conn.cursor()
+    
+    # Try to claim the "generating" status
+    # Only succeeds if cert_url is still NULL and generating is 0
+    cursor.execute("""
+        UPDATE participants 
+        SET generating = 1 
+        WHERE roll_no = ? AND event = ? AND (cert_url IS NULL OR cert_url = '') AND generating = 0
+    """, (roll, event))
+    
+    claimed = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+
+    if claimed:
+        # We are the winner of the race. Generate and upload.
+        print(f"🚀 [INIT] Generating for {roll} - {event} (Race Winner)")
+        try:
+            new_url = generate_and_upload_cert(
+                roll_no=roll, 
+                name=user_record['name'], 
+                event=event, 
+                year=user_record['year']
+            )
+            return RedirectResponse(new_url)
+        finally:
+            # Important: Reset generating flag even if it failed (so retry works)
+            conn = sqlite3.connect("forms_data.db")
+            cursor = conn.cursor()
+            cursor.execute("UPDATE participants SET generating = 0 WHERE roll_no = ? AND event = ?", (roll, event))
+            conn.commit()
+            conn.close()
+    else:
+        # Someone else is already generating it. Wait and check.
+        print(f"⏳ [WAIT] {roll} is already being generated by another request. Waiting...")
+        for _ in range(15): # wait up to 15 seconds
+            time.sleep(1)
+            data = ap.get_user_by_reg(roll)
+            user_record = next((r for r in data.to_dict(orient="records") if r['event'] == event), None)
+            if user_record and user_record.get("cert_url"):
+                return RedirectResponse(user_record["cert_url"])
+        
+        raise HTTPException(status_code=429, detail="Generation in progress. Please refresh in a few seconds.")
+
+# --- Admin Controls ---
+
+@app.get("/admin/maintenance/{state}")
+async def toggle_maintenance(state: str):
+    if state not in ["true", "false"]:
+        return {"error": "Invalid state"}
+    
+    conn = sqlite3.connect("forms_data.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE settings SET value = ? WHERE key = 'maintenance'", (state,))
+    conn.commit()
+    conn.close()
+    return {"maintenance": state}
+
+# Simple status endpoint
+@app.get("/status")
+async def status():
+    return {"status": "ok", "message": "Backend is ready for 500 users!"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Reload=True is good for dev, but might duplicate workers if not careful.
+    # Note: reload=True for development only
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)

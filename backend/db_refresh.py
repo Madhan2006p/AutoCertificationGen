@@ -2,6 +2,7 @@ import sqlite3
 import gspread
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
+import os
 
 def refresh():
     scope = [
@@ -9,33 +10,37 @@ def refresh():
         "https://www.googleapis.com/auth/drive"
     ]
 
-    creds = ServiceAccountCredentials.from_json_keyfile_name(
-        "backend/markus.json", scope
-    )
+    # Use environment variable for JSON key if available, else fallback
+    json_path = "backend/markus.json"
+    if not os.path.exists(json_path):
+        print(f"Error: {json_path} not found.")
+        return
+
+    creds = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
     client = gspread.authorize(creds)
 
-
     SHEET_NAME = "QuantumFinalList"
-    sheet = client.open(SHEET_NAME).sheet1
+    try:
+        sheet = client.open(SHEET_NAME).sheet1
+    except Exception as e:
+        print(f"Error opening sheet: {e}")
+        return
 
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
 
-    print("Fetched Rows:", len(df))
+    if df.empty:
+        print("Sheet is empty.")
+        return
 
-    # 🔥 FIX: Flatten tuple / multi-index columns
-    if isinstance(df.columns[0], tuple):
-        df.columns = df.columns[0]
-    # df.columns == ['S. NO', 'ROLL NO', 'NAME', 'YEAR', 'EVENTS']
-
+    # Clean columns
     df.columns = (
-    pd.Index(df.columns)
-      .astype(str)
-      .str.strip()
-      .str.replace("\n", " ", regex=False)
-      .str.upper()
-)
-
+        pd.Index(df.columns)
+        .astype(str)
+        .str.strip()
+        .str.replace("\n", " ", regex=False)
+        .str.upper()
+    )
 
     df_clean = df[[
         "ROLL NO",
@@ -44,27 +49,26 @@ def refresh():
         "EVENTS"
     ]].copy()
 
-
-    df_clean.columns = ["roll_no", "name", "year" ,"event"]
-
+    df_clean.columns = ["roll_no", "name", "year", "event"]
     df_clean["roll_no"] = df_clean["roll_no"].str.lower()
     df_clean["event"] = df_clean["event"].str.split(",")
-    
-
     df_clean = df_clean.explode("event")
-
-
     df_clean["event"] = df_clean["event"].str.strip()
-
-
     df_clean = df_clean[df_clean["event"] != ""]
 
-    print("Final rows after event split:", len(df_clean))
-
-
     conn = sqlite3.connect("forms_data.db")
+    
+    # --- PRESERVE CERTURLS ---
+    try:
+        existing_urls = pd.read_sql_query("SELECT roll_no, event, cert_url FROM participants", conn)
+        # Merge new data with existing urls
+        df_final = pd.merge(df_clean, existing_urls, on=["roll_no", "event"], how="left")
+    except Exception:
+        # Table doesn't exist yet
+        df_final = df_clean
+        df_final["cert_url"] = None
 
-    df_clean.to_sql(
+    df_final.to_sql(
         name="participants",
         con=conn,
         if_exists="replace",
@@ -72,5 +76,7 @@ def refresh():
     )
 
     conn.close()
+    print(f"✅ Synced {len(df_final)} participant-event records. cert_urls preserved.")
 
-    print("✅ Roll No, Name, Event saved successfully")
+if __name__ == "__main__":
+    refresh()
