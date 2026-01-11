@@ -85,6 +85,15 @@ def refresh():
         index=False
     )
 
+    # Add 'generating' column for race condition protection
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN generating INTEGER DEFAULT 0")
+        conn.commit()
+        print("✅ Added 'generating' column.")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     conn.close()
     print(f"✅ Synced {len(df_final)} participant-event records. cert_urls preserved.")
 
