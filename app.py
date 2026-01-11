@@ -1,17 +1,38 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from backend import access_person as ap
+from backend import admin_analytics
 import os
 import uvicorn
 import cloudinary
 import cloudinary.uploader
 import sqlite3
 import time
+import hashlib
+import secrets
 from tasks import generate_and_upload_cert
+
+# ============================================
+# ADMIN CREDENTIALS (Hardcoded as requested)
+# ============================================
+ADMIN_USERNAME = "Madhan2006p"
+ADMIN_PASSWORD = "iamironman"
+
+# Simple session storage (in-memory for simplicity)
+# In production, use Redis or database sessions
+admin_sessions = {}
+
+def generate_session_token():
+    return secrets.token_hex(32)
+
+def verify_admin_session(request: Request) -> bool:
+    """Verify if the request has a valid admin session."""
+    session_token = request.cookies.get("admin_session")
+    return session_token and session_token in admin_sessions
 
 # Helper to check maintenance mode
 def is_maintenance():
@@ -149,10 +170,105 @@ async def download(request: Request, roll: str, event: str):
         
         raise HTTPException(status_code=429, detail="Generation in progress. Please refresh in a few seconds.")
 
+
+# ============================================
+# ADMIN ROUTES
+# ============================================
+
+@app.get("/admin/login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    """Display the admin login page."""
+    # If already logged in, redirect to dashboard
+    if verify_admin_session(request):
+        return RedirectResponse("/admin/dashboard", status_code=302)
+    
+    return templates.TemplateResponse("admin_login.html", {"request": request, "error": None})
+
+@app.post("/admin/login", response_class=HTMLResponse)
+async def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
+    """Handle admin login form submission."""
+    # Verify credentials
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        # Create session token
+        session_token = generate_session_token()
+        admin_sessions[session_token] = {
+            "username": username,
+            "login_time": time.time()
+        }
+        
+        # Create redirect response with session cookie
+        response = RedirectResponse("/admin/dashboard", status_code=302)
+        response.set_cookie(
+            key="admin_session",
+            value=session_token,
+            httponly=True,
+            max_age=3600 * 8,  # 8 hours
+            samesite="lax"
+        )
+        
+        print(f"🔐 Admin login successful: {username}")
+        return response
+    
+    # Invalid credentials
+    print(f"❌ Admin login failed: {username}")
+    return templates.TemplateResponse(
+        "admin_login.html", 
+        {"request": request, "error": "Invalid username or password"}
+    )
+
+@app.get("/admin/dashboard", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    """Display the admin dashboard with analytics."""
+    # Check if logged in
+    if not verify_admin_session(request):
+        return RedirectResponse("/admin/login", status_code=302)
+    
+    # Fetch analytics data
+    analytics = admin_analytics.fetch_admin_analytics()
+    
+    return templates.TemplateResponse(
+        "admin_dashboard.html",
+        {
+            "request": request,
+            "total_unique": analytics["total_unique"],
+            "total_responses": analytics["total_responses"],
+            "dept_count": analytics["dept_count"],
+            "events": analytics["events"],
+            "departments": analytics["departments"],
+            "refresh_time": analytics["refresh_time"]
+        }
+    )
+
+@app.get("/admin/logout")
+async def admin_logout(request: Request):
+    """Log out the admin user."""
+    session_token = request.cookies.get("admin_session")
+    
+    if session_token and session_token in admin_sessions:
+        del admin_sessions[session_token]
+        print("🚪 Admin logged out")
+    
+    response = RedirectResponse("/", status_code=302)
+    response.delete_cookie("admin_session")
+    return response
+
+@app.get("/admin/api/analytics")
+async def admin_api_analytics(request: Request):
+    """API endpoint to get analytics data (JSON)."""
+    if not verify_admin_session(request):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    return admin_analytics.fetch_admin_analytics()
+
+
 # --- Admin Controls ---
 
 @app.get("/admin/maintenance/{state}")
-async def toggle_maintenance(state: str):
+async def toggle_maintenance(request: Request, state: str):
+    # Require admin login for maintenance toggle
+    if not verify_admin_session(request):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
     if state not in ["true", "false"]:
         return {"error": "Invalid state"}
     
@@ -166,7 +282,7 @@ async def toggle_maintenance(state: str):
 # Simple status endpoint
 @app.get("/status")
 async def status():
-    return {"status": "ok", "message": "Backend is ready for 500 users!"}
+    return {"status": "ok", "message": "Mark-us 26 Certificate Portal is ready!"}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Mark-us 26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+            min-height: 100vh;
+            color: #c9d1d9;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .header {
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(48, 54, 61, 0.8);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #f85149;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(248, 81, 73, 0.2);
+            border-color: rgba(248, 81, 73, 0.5);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(22, 27, 34, 0.90);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.05));
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, rgba(46, 160, 67, 0.15), rgba(35, 134, 54, 0.05));
+            border-color: rgba(46, 160, 67, 0.3);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.primary .stat-icon {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-card.success .stat-icon {
+            background: rgba(46, 160, 67, 0.2);
+        }
+
+        .stat-card .stat-icon {
+            background: rgba(88, 166, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8b949e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #f0f6fc;
+            line-height: 1;
+        }
+
+        .stat-card.primary .stat-value {
+            color: #a78bfa;
+        }
+
+        .stat-card.success .stat-value {
+            color: #3fb950;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title span {
+            font-size: 20px;
+        }
+
+        .table-container {
+            background: rgba(22, 27, 34, 0.90);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: rgba(33, 38, 45, 0.8);
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.8);
+        }
+
+        .data-table td {
+            padding: 16px 20px;
+            font-size: 14px;
+            color: #c9d1d9;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(88, 166, 255, 0.03);
+        }
+
+        .dept-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .dept-badge.isr {
+            background: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+
+        .dept-badge.it {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .dept-badge.ss {
+            background: rgba(34, 211, 238, 0.15);
+            color: #22d3ee;
+            border: 1px solid rgba(34, 211, 238, 0.3);
+        }
+
+        .dept-badge.ct {
+            background: rgba(45, 212, 191, 0.15);
+            color: #2dd4bf;
+            border: 1px solid rgba(45, 212, 191, 0.3);
+        }
+
+        .dept-badge.ds {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .dept-badge.mca {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .dept-badge.cse {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .dept-badge.ece {
+            background: rgba(46, 160, 67, 0.15);
+            color: #3fb950;
+            border: 1px solid rgba(46, 160, 67, 0.3);
+        }
+
+        .dept-badge.eee {
+            background: rgba(255, 166, 87, 0.15);
+            color: #ffa657;
+            border: 1px solid rgba(255, 166, 87, 0.3);
+        }
+
+        .dept-badge.mech {
+            background: rgba(248, 81, 73, 0.15);
+            color: #f85149;
+            border: 1px solid rgba(248, 81, 73, 0.3);
+        }
+
+        .dept-badge.civil {
+            background: rgba(121, 192, 255, 0.15);
+            color: #79c0ff;
+            border: 1px solid rgba(121, 192, 255, 0.3);
+        }
+
+        .dept-badge.ai,
+        .dept-badge.aids,
+        .dept-badge.aiml {
+            background: rgba(244, 114, 182, 0.15);
+            color: #f472b6;
+            border: 1px solid rgba(244, 114, 182, 0.3);
+        }
+
+        .dept-badge.cy {
+            background: rgba(192, 132, 252, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .dept-badge.mba {
+            background: rgba(253, 186, 116, 0.15);
+            color: #fdba74;
+            border: 1px solid rgba(253, 186, 116, 0.3);
+        }
+
+        .dept-badge.other {
+            background: rgba(110, 118, 129, 0.15);
+            color: #8b949e;
+            border: 1px solid rgba(110, 118, 129, 0.3);
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: rgba(48, 54, 61, 0.8);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .progress-bar.isr {
+            background: linear-gradient(90deg, #58a6ff, #79c0ff);
+        }
+
+        .progress-bar.it {
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+        }
+
+        .progress-bar.ss {
+            background: linear-gradient(90deg, #0891b2, #22d3ee);
+        }
+
+        .progress-bar.ct {
+            background: linear-gradient(90deg, #0d9488, #2dd4bf);
+        }
+
+        .progress-bar.ds {
+            background: linear-gradient(90deg, #059669, #34d399);
+        }
+
+        .progress-bar.mca {
+            background: linear-gradient(90deg, #ea580c, #fb923c);
+        }
+
+        .progress-bar.cse {
+            background: linear-gradient(90deg, #7c3aed, #a78bfa);
+        }
+
+        .progress-bar.ece {
+            background: linear-gradient(90deg, #238636, #3fb950);
+        }
+
+        .progress-bar.eee {
+            background: linear-gradient(90deg, #d97706, #ffa657);
+        }
+
+        .progress-bar.mech {
+            background: linear-gradient(90deg, #da3633, #f85149);
+        }
+
+        .progress-bar.civil {
+            background: linear-gradient(90deg, #58a6ff, #a5d6ff);
+        }
+
+        .progress-bar.ai,
+        .progress-bar.aids,
+        .progress-bar.aiml {
+            background: linear-gradient(90deg, #db2777, #f472b6);
+        }
+
+        .progress-bar.cy {
+            background: linear-gradient(90deg, #9333ea, #c084fc);
+        }
+
+        .progress-bar.mba {
+            background: linear-gradient(90deg, #ea580c, #fdba74);
+        }
+
+        .progress-bar.other {
+            background: linear-gradient(90deg, #6e7681, #8b949e);
+        }
+
+        .dept-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .dept-count {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .event-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .event-card {
+            background: rgba(22, 27, 34, 0.90);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            border-color: rgba(88, 166, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .event-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f0f6fc;
+            margin-bottom: 12px;
+        }
+
+        .event-count {
+            font-size: 28px;
+            font-weight: 700;
+            color: #58a6ff;
+            margin-bottom: 8px;
+        }
+
+        .event-label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .refresh-time {
+            text-align: center;
+            font-size: 12px;
+            color: #6e7681;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 20px;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">Mark-us 26</div>
+            <span class="admin-badge">🔐 Admin Dashboard</span>
+        </div>
+        <a href="/admin/logout" class="logout-btn">🚪 Logout</a>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Participation Analytics</h1>
+        <p class="page-subtitle">Real-time statistics from Mark-us 26 event registrations</p>
+
+        <!-- Main Stats -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">Total Unique Participants</div>
+                <div class="stat-value">{{ total_unique }}</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon">📝</div>
+                <div class="stat-label">Total Responses</div>
+                <div class="stat-value">{{ total_responses }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-label">Departments Represented</div>
+                <div class="stat-value">{{ dept_count }}</div>
+            </div>
+        </div>
+
+        <!-- Event Breakdown -->
+        <h2 class="section-title"><span>🎯</span> Event-wise Responses</h2>
+        <div class="event-cards">
+            {% for event in events %}
+            <div class="event-card">
+                <div class="event-name">{{ event.name }}</div>
+                <div class="event-count">{{ event.count }}</div>
+                <div class="event-label">Total Responses</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Department Analysis -->
+        <h2 class="section-title"><span>🏛️</span> Department-wise Analysis</h2>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Participants</th>
+                        <th style="width: 40%;">Distribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in departments %}
+                    <tr>
+                        <td>
+                            <span class="dept-badge {{ dept.code|lower }}">{{ dept.name }}</span>
+                        </td>
+                        <td>
+                            <div class="dept-row">
+                                <span class="dept-count">{{ dept.count }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="dept-row">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar {{ dept.code|lower }}"
+                                        style="width: {{ dept.percentage }}%;"></div>
+                                </div>
+                                <span style="min-width: 45px; color: #8b949e; font-size: 13px;">{{ dept.percentage
+                                    }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="refresh-time">
+            Last updated: {{ refresh_time }} | Data pulled from Google Sheets
+        </div>
+    </div>
+
+</body>
+
+</html>
