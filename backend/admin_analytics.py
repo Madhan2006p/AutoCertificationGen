@@ -5,6 +5,7 @@ import os
 import json
 from datetime import datetime
 import re
+from collections import defaultdict
 
 # Sheet configurations with department column names
 SHEET_CONFIGS = [
@@ -215,31 +216,20 @@ def extract_department_from_row(row: dict, dept_column: str) -> str:
 
 def fetch_admin_analytics():
     """
-    Fetch analytics data from all three Google Sheets.
-    Returns:
-        - total_unique: Count of unique participants
-        - total_responses: Total number of responses across all sheets
-        - events: List of {name, count} for each event
-        - departments: List of {code, name, count, percentage} for department breakdown
-        - refresh_time: Timestamp of data fetch
+    Fetch comprehensive analytics data from all three Google Sheets.
+    Returns complete analytics for decision making.
     """
     try:
         client = get_gspread_client()
         if not client:
-            return {
-                "error": "Could not authenticate with Google Sheets",
-                "total_unique": 0,
-                "total_responses": 0,
-                "events": [],
-                "departments": [],
-                "dept_count": 0,
-                "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+            return get_empty_analytics("Could not authenticate with Google Sheets")
 
-        all_roll_numbers = set()  # For unique participants
+        # Data structures for comprehensive analytics
+        roll_to_events = defaultdict(set)  # Track which events each participant joined
         roll_to_dept = {}  # Map roll number to department
         total_responses = 0
         events_data = []
+        event_participants = {}  # Track unique participants per event
         
         for sheet_config in SHEET_CONFIGS:
             try:
@@ -252,10 +242,8 @@ def fetch_admin_analytics():
                 response_count = len(records)
                 total_responses += response_count
                 
-                events_data.append({
-                    "name": sheet_config["display_name"],
-                    "count": response_count
-                })
+                event_name = sheet_config["display_name"]
+                event_participants[event_name] = set()
                 
                 # Extract all roll numbers and departments from this sheet
                 for record in records:
@@ -266,31 +254,70 @@ def fetch_admin_analytics():
                     dept = extract_department_from_row(record, sheet_config["dept_column"])
                     
                     for roll_no in roll_numbers:
-                        all_roll_numbers.add(roll_no)
+                        roll_to_events[roll_no].add(event_name)
+                        event_participants[event_name].add(roll_no)
                         # Store department for this roll number (use first occurrence)
                         if roll_no not in roll_to_dept:
                             roll_to_dept[roll_no] = dept
                 
-                print(f"   ✅ Found {response_count} responses")
+                events_data.append({
+                    "name": event_name,
+                    "count": response_count,
+                    "unique_participants": len(event_participants[event_name])
+                })
+                
+                print(f"   ✅ Found {response_count} responses, {len(event_participants[event_name])} unique participants")
                 
             except Exception as e:
                 print(f"   ❌ Error fetching {sheet_config['name']}: {e}")
                 events_data.append({
                     "name": sheet_config["display_name"],
-                    "count": 0
+                    "count": 0,
+                    "unique_participants": 0
                 })
 
-        # Calculate department breakdown from collected data
+        # Calculate participation statistics
+        all_roll_numbers = set(roll_to_events.keys())
+        total_unique = len(all_roll_numbers)
+        
+        # Multi-event participation analysis
+        single_event = 0
+        two_events = 0
+        three_events = 0
+        multi_event_participants = []
+        
+        for roll_no, events in roll_to_events.items():
+            event_count = len(events)
+            if event_count == 1:
+                single_event += 1
+            elif event_count == 2:
+                two_events += 1
+                multi_event_participants.append({
+                    "roll_no": roll_no,
+                    "events": list(events),
+                    "event_count": event_count,
+                    "dept": roll_to_dept.get(roll_no, "Unknown")
+                })
+            elif event_count >= 3:
+                three_events += 1
+                multi_event_participants.append({
+                    "roll_no": roll_no,
+                    "events": list(events),
+                    "event_count": event_count,
+                    "dept": roll_to_dept.get(roll_no, "Unknown")
+                })
+        
+        # Sort multi-event participants by event count (descending)
+        multi_event_participants.sort(key=lambda x: x["event_count"], reverse=True)
+        
+        # Calculate department breakdown
         dept_counts = {}
         for roll_no in all_roll_numbers:
             dept = roll_to_dept.get(roll_no, "Other")
             dept_counts[dept] = dept_counts.get(dept, 0) + 1
         
         # Calculate percentages and format department data
-        total_unique = len(all_roll_numbers)
         departments = []
-        
-        # Generate color codes for departments
         dept_colors = {
             "MSc Information Science": "isr",
             "MSc Information Technology": "it",
@@ -333,39 +360,123 @@ def fetch_admin_analytics():
                 "percentage": percentage
             })
 
+        # Cross-event analysis (which event combinations are popular)
+        event_combinations = defaultdict(int)
+        for roll_no, events in roll_to_events.items():
+            if len(events) >= 2:
+                combo = " + ".join(sorted(events))
+                event_combinations[combo] += 1
+        
+        popular_combos = [
+            {"combo": combo, "count": count}
+            for combo, count in sorted(event_combinations.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        # Engagement score (average events per participant)
+        total_participations = sum(len(events) for events in roll_to_events.values())
+        avg_events_per_participant = round(total_participations / total_unique, 2) if total_unique > 0 else 0
+
         return {
+            # Basic stats
             "total_unique": total_unique,
             "total_responses": total_responses,
-            "events": events_data,
-            "departments": departments,
             "dept_count": len(departments),
+            
+            # Event data
+            "events": events_data,
+            
+            # Department breakdown
+            "departments": departments,
+            
+            # Multi-event participation
+            "participation_breakdown": {
+                "single_event": single_event,
+                "two_events": two_events,
+                "three_events": three_events,
+                "multi_event_total": two_events + three_events,
+                "single_event_pct": round((single_event / total_unique * 100), 1) if total_unique > 0 else 0,
+                "multi_event_pct": round(((two_events + three_events) / total_unique * 100), 1) if total_unique > 0 else 0,
+            },
+            
+            # Top multi-event participants (limit to top 10)
+            "multi_event_participants": multi_event_participants[:10],
+            
+            # Popular event combinations
+            "popular_combos": popular_combos,
+            
+            # Engagement metrics
+            "engagement": {
+                "avg_events_per_participant": avg_events_per_participant,
+                "total_participations": total_participations,
+            },
+            
+            # Metadata
             "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
     except Exception as e:
         print(f"❌ Error in fetch_admin_analytics: {e}")
-        return {
-            "error": str(e),
-            "total_unique": 0,
-            "total_responses": 0,
-            "events": [],
-            "departments": [],
-            "dept_count": 0,
-            "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        return get_empty_analytics(str(e))
+
+
+def get_empty_analytics(error_msg: str):
+    """Return empty analytics structure with error message."""
+    return {
+        "error": error_msg,
+        "total_unique": 0,
+        "total_responses": 0,
+        "events": [],
+        "departments": [],
+        "dept_count": 0,
+        "participation_breakdown": {
+            "single_event": 0,
+            "two_events": 0,
+            "three_events": 0,
+            "multi_event_total": 0,
+            "single_event_pct": 0,
+            "multi_event_pct": 0,
+        },
+        "multi_event_participants": [],
+        "popular_combos": [],
+        "engagement": {
+            "avg_events_per_participant": 0,
+            "total_participations": 0,
+        },
+        "refresh_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
 
 
 if __name__ == "__main__":
     # Test the analytics function
     result = fetch_admin_analytics()
-    print("\n" + "="*50)
+    print("\n" + "="*60)
     print("📊 ADMIN ANALYTICS RESULTS")
-    print("="*50)
-    print(f"Total Unique Participants: {result['total_unique']}")
-    print(f"Total Responses: {result['total_responses']}")
-    print(f"\n🎯 Events:")
+    print("="*60)
+    
+    print(f"\n📈 OVERVIEW:")
+    print(f"   Total Unique Participants: {result['total_unique']}")
+    print(f"   Total Responses: {result['total_responses']}")
+    print(f"   Avg Events/Participant: {result['engagement']['avg_events_per_participant']}")
+    
+    print(f"\n🎯 EVENT-WISE:")
     for event in result['events']:
-        print(f"   - {event['name']}: {event['count']} responses")
-    print(f"\n🏛️ Departments ({result['dept_count']} total):")
-    for dept in result['departments']:
+        print(f"   - {event['name']}: {event['count']} responses ({event.get('unique_participants', 'N/A')} unique)")
+    
+    print(f"\n👥 PARTICIPATION BREAKDOWN:")
+    pb = result['participation_breakdown']
+    print(f"   Single Event: {pb['single_event']} ({pb['single_event_pct']}%)")
+    print(f"   Two Events: {pb['two_events']}")
+    print(f"   Three Events: {pb['three_events']}")
+    print(f"   Multi-Event Total: {pb['multi_event_total']} ({pb['multi_event_pct']}%)")
+    
+    print(f"\n🔥 POPULAR EVENT COMBINATIONS:")
+    for combo in result['popular_combos'][:5]:
+        print(f"   - {combo['combo']}: {combo['count']} participants")
+    
+    print(f"\n🌟 TOP MULTI-EVENT PARTICIPANTS:")
+    for p in result['multi_event_participants'][:5]:
+        print(f"   - {p['roll_no']} ({p['dept']}): {p['event_count']} events - {', '.join(p['events'])}")
+    
+    print(f"\n🏛️ DEPARTMENTS ({result['dept_count']} total):")
+    for dept in result['departments'][:5]:
         print(f"   - {dept['name']}: {dept['count']} ({dept['percentage']}%)")

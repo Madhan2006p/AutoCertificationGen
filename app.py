@@ -218,7 +218,7 @@ async def admin_login(request: Request, username: str = Form(...), password: str
 
 @app.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
-    """Display the admin dashboard with analytics."""
+    """Display the admin dashboard with comprehensive analytics."""
     # Check if logged in
     if not verify_admin_session(request):
         return RedirectResponse("/admin/login", status_code=302)
@@ -230,11 +230,21 @@ async def admin_dashboard(request: Request):
         "admin_dashboard.html",
         {
             "request": request,
+            # Basic stats
             "total_unique": analytics["total_unique"],
             "total_responses": analytics["total_responses"],
             "dept_count": analytics["dept_count"],
+            # Event data
             "events": analytics["events"],
+            # Department breakdown
             "departments": analytics["departments"],
+            # Multi-event participation
+            "participation_breakdown": analytics["participation_breakdown"],
+            "multi_event_participants": analytics["multi_event_participants"],
+            "popular_combos": analytics["popular_combos"],
+            # Engagement metrics
+            "engagement": analytics["engagement"],
+            # Metadata
             "refresh_time": analytics["refresh_time"]
         }
     )
