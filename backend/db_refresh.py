@@ -3,6 +3,7 @@ import gspread
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 import os
+import json
 
 def refresh():
     scope = [
@@ -10,13 +11,24 @@ def refresh():
         "https://www.googleapis.com/auth/drive"
     ]
 
-    # Use environment variable for JSON key if available, else fallback
-    json_path = "backend/markus.json"
-    if not os.path.exists(json_path):
-        print(f"Error: {json_path} not found.")
-        return
+    # Try environment variable first (for Render deployment)
+    # Then fall back to local file (for local development)
+    json_env = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    
+    if json_env:
+        # Parse JSON from environment variable
+        print("Using credentials from environment variable...")
+        creds_dict = json.loads(json_env)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    else:
+        # Fall back to local file
+        json_path = "backend/markus.json"
+        if not os.path.exists(json_path):
+            print(f"Error: {json_path} not found and GOOGLE_CREDENTIALS_JSON env var not set.")
+            return
+        print("Using credentials from local file...")
+        creds = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
 
-    creds = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
     client = gspread.authorize(creds)
 
     SHEET_NAME = "QuantumFinalList"
@@ -58,13 +70,11 @@ def refresh():
 
     conn = sqlite3.connect("forms_data.db")
     
-    # --- PRESERVE CERTURLS ---
+    # --- PRESERVE CERT URLS ---
     try:
         existing_urls = pd.read_sql_query("SELECT roll_no, event, cert_url FROM participants", conn)
-        # Merge new data with existing urls
         df_final = pd.merge(df_clean, existing_urls, on=["roll_no", "event"], how="left")
     except Exception:
-        # Table doesn't exist yet
         df_final = df_clean
         df_final["cert_url"] = None
 
