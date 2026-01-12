@@ -231,6 +231,31 @@
         <div class="footer">
             Only authorized administrators can access this area.
         </div>
+
+        {% if events %}
+        <div style="margin-top: 30px; border-top: 1px solid rgba(48, 54, 61, 0.5); padding-top: 25px;">
+            <div
+                style="font-size: 11px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">
+                📈 Live Participation Status
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
+                {% for event in events %}
+                <div
+                    style="background: rgba(33, 38, 45, 0.5); border: 1px solid rgba(48, 54, 61, 0.5); padding: 12px; border-radius: 10px;">
+                    <div
+                        style="font-size: 11px; color: #8b949e; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ event.name }}</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #a78bfa;">{{ event.unique_participants }}
+                    </div>
+                    <div style="font-size: 9px; color: #6e7681;">Unique Participants</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="margin-top: 15px; font-size: 12px; color: #8b949e;">
+                Total unique registrations: <span style="color: #3fb950; font-weight: 700;">{{ total_unique }}</span>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
 </body>

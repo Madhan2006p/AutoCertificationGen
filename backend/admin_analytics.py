@@ -26,6 +26,24 @@ SHEET_CONFIGS = [
         "display_name": "Technical Quiz",
         "roll_columns": ["Roll no (eg : 23XXX001)", "Team Member 2 Roll.no  (eg : 23XXX001)"],
         "dept_column": "Department"
+    },
+    {
+        "name": "CHILL & SKILL (Responses)",
+        "display_name": "Chill & Skill",
+        "roll_columns": ["Roll no (eg : 23XXX001)", "Team Member 2 Roll.no  (eg : 23XXX001)", "Team Member 3 Roll.no  (eg : 23XXX001)"],
+        "dept_column": "Department"
+    },
+    {
+        "name": "Markus 2K25 - UI/UX  (Responses)",
+        "display_name": "UI/UX Design",
+        "roll_columns": ["Team Leader Roll no (eg : 23XXX001)", "Team member 1 Roll number (eg:23XXX001)"],
+        "dept_column": "Department"
+    },
+    {
+        "name": "Paper (Responses)",
+        "display_name": "Paper Presentation",
+        "roll_columns": ["Team Leader Roll no (eg : 23XXX001)", "Team member 1 Roll number (eg:23XXX001)"],
+        "dept_column": "Department"
     }
 ]
 
@@ -284,6 +302,8 @@ def fetch_admin_analytics():
         single_event = 0
         two_events = 0
         three_events = 0
+        four_events = 0
+        five_plus_events = 0
         multi_event_participants = []
         
         for roll_no, events in roll_to_events.items():
@@ -292,14 +312,14 @@ def fetch_admin_analytics():
                 single_event += 1
             elif event_count == 2:
                 two_events += 1
-                multi_event_participants.append({
-                    "roll_no": roll_no,
-                    "events": list(events),
-                    "event_count": event_count,
-                    "dept": roll_to_dept.get(roll_no, "Unknown")
-                })
-            elif event_count >= 3:
+            elif event_count == 3:
                 three_events += 1
+            elif event_count == 4:
+                four_events += 1
+            elif event_count >= 5:
+                five_plus_events += 1
+            
+            if event_count >= 2:
                 multi_event_participants.append({
                     "roll_no": roll_no,
                     "events": list(events),
@@ -393,9 +413,11 @@ def fetch_admin_analytics():
                 "single_event": single_event,
                 "two_events": two_events,
                 "three_events": three_events,
-                "multi_event_total": two_events + three_events,
+                "four_events": four_events,
+                "five_plus_events": five_plus_events,
+                "multi_event_total": total_unique - single_event,
                 "single_event_pct": round((single_event / total_unique * 100), 1) if total_unique > 0 else 0,
-                "multi_event_pct": round(((two_events + three_events) / total_unique * 100), 1) if total_unique > 0 else 0,
+                "multi_event_pct": round(((total_unique - single_event) / total_unique * 100), 1) if total_unique > 0 else 0,
             },
             
             # Top multi-event participants (limit to top 10)

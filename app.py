@@ -15,6 +15,23 @@ import time
 import hashlib
 import secrets
 from tasks import generate_and_upload_cert
+import threading
+
+# Caching for analytics to keep login page fast
+analytics_cache = {
+    "data": None,
+    "last_updated": 0
+}
+CACHE_TIMEOUT = 300 # 5 minutes
+
+def get_cached_analytics():
+    global analytics_cache
+    now = time.time()
+    if not analytics_cache["data"] or (now - analytics_cache["last_updated"] > CACHE_TIMEOUT):
+        print("🔄 Refreshing analytics cache...")
+        analytics_cache["data"] = admin_analytics.fetch_admin_analytics()
+        analytics_cache["last_updated"] = now
+    return analytics_cache["data"]
 
 # ============================================
 # ADMIN CREDENTIALS (Hardcoded as requested)
@@ -182,7 +199,21 @@ async def admin_login_page(request: Request):
     if verify_admin_session(request):
         return RedirectResponse("/admin/dashboard", status_code=302)
     
-    return templates.TemplateResponse("admin_login.html", {"request": request, "error": None})
+    # Get basic stats for the login page
+    try:
+        stats = get_cached_analytics()
+    except Exception:
+        stats = {"events": [], "total_unique": 0}
+
+    return templates.TemplateResponse(
+        "admin_login.html", 
+        {
+            "request": request, 
+            "error": None,
+            "events": stats.get("events", []),
+            "total_unique": stats.get("total_unique", 0)
+        }
+    )
 
 @app.post("/admin/login", response_class=HTMLResponse)
 async def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
