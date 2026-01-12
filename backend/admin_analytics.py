@@ -29,14 +29,14 @@ SHEET_CONFIGS = [
     },
     {
         "name": "CHILL & SKILL (Responses)",
-        "display_name": "Chill & Skill",
-        "roll_columns": ["Roll no (eg : 23XXX001)", "Team Member 2 Roll.no  (eg : 23XXX001)", "Team Member 3 Roll.no  (eg : 23XXX001)"],
-        "dept_column": "Department"
+        "display_name": "Mindsprint",
+        "roll_columns": ["ROLL NO (Eg : 23XXX001)", "TEAM MEMBER 1 ROLL NO (Eg : 23XXX001)"],
+        "dept_column": "DEPARTMENT"
     },
     {
         "name": "Markus 2K25 - UI/UX  (Responses)",
         "display_name": "UI/UX Design",
-        "roll_columns": ["Team Leader Roll no (eg : 23XXX001)", "Team member 1 Roll number (eg:23XXX001)"],
+        "roll_columns": ["Roll no (eg:23XXX001)"],
         "dept_column": "Department"
     },
     {
