@@ -234,8 +234,15 @@ def extract_department_from_row(row: dict, dept_column: str) -> str:
 
 def fetch_admin_analytics():
     """
-    Fetch comprehensive analytics data from all three Google Sheets.
-    Returns complete analytics for decision making.
+    Fetch comprehensive analytics data from all event Google Sheets.
+    
+    Returns complete analytics for decision making, including:
+    - Total unique participants (counts ALL team members from all events)
+    - Event-wise statistics (team count + individual participant count)
+    - Multi-event participation tracking
+    - Department-wise breakdown
+    
+    Note: For team events, each team member is counted individually in unique_participants.
     """
     try:
         client = get_gspread_client()
@@ -300,13 +307,17 @@ def fetch_admin_analytics():
                         if roll_no not in roll_to_dept:
                             roll_to_dept[roll_no] = dept
                 
+                # Calculate statistics
+                team_count = response_count
+                participant_count = len(event_participants[event_name])
+                
                 events_data.append({
                     "name": event_name,
-                    "count": response_count,
-                    "unique_participants": len(event_participants[event_name])
+                    "count": team_count,  # Number of teams/responses
+                    "unique_participants": participant_count  # Total individuals (all team members)
                 })
                 
-                print(f"   ✅ Found {response_count} responses, {len(event_participants[event_name])} unique participants")
+                print(f"   ✅ {event_name}: {team_count} teams/responses → {participant_count} unique participants")
                 
             except Exception as e:
                 print(f"   ❌ Error fetching {sheet_config['name']}: {e}")
@@ -502,9 +513,9 @@ if __name__ == "__main__":
     print(f"   Total Responses: {result['total_responses']}")
     print(f"   Avg Events/Participant: {result['engagement']['avg_events_per_participant']}")
     
-    print(f"\n🎯 EVENT-WISE:")
+    print(f"\n🎯 EVENT-WISE (All team members counted):")
     for event in result['events']:
-        print(f"   - {event['name']}: {event['count']} responses ({event.get('unique_participants', 'N/A')} unique)")
+        print(f"   - {event['name']}: {event['count']} teams/responses → {event.get('unique_participants', 'N/A')} participants")
     
     print(f"\n👥 PARTICIPATION BREAKDOWN:")
     pb = result['participation_breakdown']
