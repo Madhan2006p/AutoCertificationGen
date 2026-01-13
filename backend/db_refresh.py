@@ -1,7 +1,7 @@
 import sqlite3
 import gspread
 import pandas as pd
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import os
 import json
 
@@ -19,7 +19,7 @@ def refresh():
         # Parse JSON from environment variable
         print("Using credentials from environment variable...")
         creds_dict = json.loads(json_env)
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     else:
         # Fall back to local file
         json_path = "backend/markus.json"
@@ -27,7 +27,7 @@ def refresh():
             print(f"Error: {json_path} not found and GOOGLE_CREDENTIALS_JSON env var not set.")
             return
         print("Using credentials from local file...")
-        creds = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
+        creds = Credentials.from_service_account_file(json_path, scopes=scope)
 
     client = gspread.authorize(creds)
 
