@@ -34,7 +34,7 @@ SHEET_CONFIGS = [
         "dept_column": "DEPARTMENT"
     },
     {
-        "name": "Markus 2K25 - UI/UX  (Responses)",
+        "name": "UI/UX  (Responses)",
         "display_name": "UI/UX Design",
         "roll_columns": ["Roll no (eg:23XXX001)"],
         "dept_column": "Department"
