@@ -255,8 +255,30 @@ def fetch_admin_analytics():
                 spreadsheet = client.open(sheet_config["name"])
                 worksheet = spreadsheet.sheet1
                 
-                # Get all records
-                records = worksheet.get_all_records()
+                # Get all records - handle empty/duplicate headers
+                # Get headers first and clean them
+                headers = worksheet.row_values(1)
+                all_values = worksheet.get_all_values()
+                
+                # Clean headers: rename empty headers to avoid duplicates
+                cleaned_headers = []
+                empty_count = 0
+                for i, header in enumerate(headers):
+                    if not header or header.strip() == '':
+                        empty_count += 1
+                        cleaned_headers.append(f'_empty_{empty_count}')
+                    else:
+                        cleaned_headers.append(header)
+                
+                # Manually create records dictionary
+                records = []
+                for row_values in all_values[1:]:  # Skip header row
+                    if any(row_values):  # Skip completely empty rows
+                        record = {}
+                        for i, value in enumerate(row_values):
+                            if i < len(cleaned_headers):
+                                record[cleaned_headers[i]] = value
+                        records.append(record)
                 response_count = len(records)
                 total_responses += response_count
                 
