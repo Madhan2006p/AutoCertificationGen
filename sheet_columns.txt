@@ -2,45 +2,9 @@
 ============================================================
 Sheet: CHILL & SKILL (Responses)
 ============================================================
-
-Found 12 columns:
-1. 'Timestamp'
-2. 'Email Address'
-3. 'NAME WITH INITIAL (Eg: ANIL A)'
-4. 'ROLL NO (Eg : 23XXX001)'
-5. 'YEAR OF STUDY'
-6. 'DEPARTMENT'
-7. 'MAIL ID (KONGU MAIL ID) '
-8. 'PHONE NUMBER'
-9. 'TEAM NAME'
-10. 'TEAM MEMBER 1 NAME (Eg : ANIL A)'
-11. 'TEAM MEMBER 1 ROLL NO (Eg : 23XXX001)'
-12. 'JOINED WHATSAPP GROUP ?
-LINK: click here to join'
-
-Sample data (first row):
+ERROR: ('invalid_grant: Invalid JWT: Token must be a short-lived token (60 minutes) and in a reasonable timeframe. Check your iat and exp values in the JWT claim.', {'error': 'invalid_grant', 'error_description': 'Invalid JWT: Token must be a short-lived token (60 minutes) and in a reasonable timeframe. Check your iat and exp values in the JWT claim.'})
 
 ============================================================
-Sheet: Markus 2K25 - UI/UX  (Responses)
+Sheet: UI/UX  (Responses)
 ============================================================
-
-Found 13 columns:
-1. 'Timestamp'
-2. 'Email Address'
-3. 'Name with initial (eg:Anu A)'
-4. 'Roll no (eg:23XXX001)'
-5. 'Year of study'
-6. 'Department'
-7. 'Mail id (Kongu mail id)'
-8. 'Phone number'
-9. 'Team Name'
-10. 'Team member 1 name (eg:Anu A)'
-11. 'Team member 1 Roll number (eg:23XXX001)'
-12. 'Joined WhatsApp Group
-Click here to join'
-13. 'Joined Whatsapp group?
-Click here to join'
-
-Sample data (first row):
-4. Roll no (eg:23XXX001): '1/6/2026 15:11:05'
-11. Team member 1 Roll number (eg:23XXX001): '1/6/2026 15:11:05'
+ERROR: ('invalid_grant: Invalid JWT: Token must be a short-lived token (60 minutes) and in a reasonable timeframe. Check your iat and exp values in the JWT claim.', {'error': 'invalid_grant', 'error_description': 'Invalid JWT: Token must be a short-lived token (60 minutes) and in a reasonable timeframe. Check your iat and exp values in the JWT claim.'})

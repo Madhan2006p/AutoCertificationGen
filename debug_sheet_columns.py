@@ -1,5 +1,5 @@
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import os
 import json
 
@@ -13,16 +13,16 @@ def debug_sheet_columns():
     
     if json_env:
         creds_dict = json.loads(json_env)
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     else:
         json_path = "backend/markus.json"
-        creds = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
+        creds = Credentials.from_service_account_file(json_path, scopes=scope)
 
     client = gspread.authorize(creds)
 
     sheets_to_check = [
         "CHILL & SKILL (Responses)",
-        "Markus 2K25 - UI/UX  (Responses)"
+        "UI/UX  (Responses)"
     ]
 
     with open("sheet_columns.txt", "w", encoding="utf-8") as f:
