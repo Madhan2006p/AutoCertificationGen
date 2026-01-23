@@ -9,6 +9,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
+    # Load sheet configurations from admin_analytics to match Admin Login/Dashboard links
     from admin_analytics import get_gspread_client, SHEET_CONFIGS, normalize_department
 except ImportError:
     # If running from root
