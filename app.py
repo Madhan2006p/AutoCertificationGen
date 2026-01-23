@@ -74,7 +74,8 @@ async def generate(request: Request, roll_no: str, event_id: str):
             name=record["name"], 
             year=record["year"], 
             event=clean_event_name, 
-            roll_no=roll_no
+            roll_no=roll_no,
+            department=record.get("department", "")
         )
         
         # Upload to Cloudinary
