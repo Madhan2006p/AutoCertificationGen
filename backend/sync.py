@@ -12,7 +12,7 @@ SHEETS = [
     "MARKUS Project Presentation 2k26 (Responses)",
     "MARKUS Technical Quiz (Responses)",
     "CHILL & SKILL (Responses)",
-    "UI/UX  (Responses)",
+    "UI/UX (Responses)",  # Fixed spacing
     "Paper (Responses)" # Adjusted assumption
 ]
 
