@@ -22,11 +22,33 @@ def generate_local_certificate(name, year, event, roll_no):
     img = Image.open(TEMPLATE_PATH)
     draw = ImageDraw.Draw(img)
 
-    # Load Fonts
-    try:
-        font_large = ImageFont.truetype(FONT_PATH, 45) # For Name
-        font_small = ImageFont.truetype(FONT_PATH, 35) # For Year/Event
-    except:
+    # Load Fonts - try multiple options
+    font_large = None
+    font_small = None
+    
+    # List of fonts to try (in order of preference)
+    font_paths = [
+        os.path.join(BASE_DIR, "fonts", "DejaVuSans-Bold.ttf"),
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux/Render
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+        "C:/Windows/Fonts/arial.ttf",  # Windows fallback
+        "C:/Windows/Fonts/arialbd.ttf",
+    ]
+    
+    for fp in font_paths:
+        if os.path.exists(fp):
+            try:
+                font_large = ImageFont.truetype(fp, 45)
+                font_small = ImageFont.truetype(fp, 35)
+                print(f"Using font: {fp}")
+                break
+            except Exception as e:
+                print(f"Failed to load {fp}: {e}")
+                continue
+    
+    if not font_large:
+        print("WARNING: No custom font found, using default (may be tiny)")
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
 
