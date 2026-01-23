@@ -100,6 +100,57 @@ async def manual_sync():
     threading.Thread(target=sync_data).start()
     return {"status": "Sync started in background"}
 
+# ========== ADMIN PORTAL ==========
+from backend.database import get_all_participants, toggle_cert_visibility, get_stats
+
+ADMIN_USERNAME = "Madhan2006p"
+ADMIN_PASSWORD = "iamironman"
+admin_sessions = set()
+
+@app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin/login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request, "error": None})
+
+@app.post("/admin/login", response_class=HTMLResponse)
+async def admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        # Simple session using cookie
+        response = RedirectResponse("/admin/dashboard", status_code=302)
+        response.set_cookie("admin_session", "authenticated", httponly=True, max_age=3600*8)
+        return response
+    return templates.TemplateResponse("admin_login.html", {"request": request, "error": "Invalid credentials"})
+
+def is_admin(request: Request):
+    return request.cookies.get("admin_session") == "authenticated"
+
+@app.get("/admin/dashboard", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    if not is_admin(request):
+        return RedirectResponse("/admin/login", status_code=302)
+    
+    participants = get_all_participants()
+    stats = get_stats()
+    return templates.TemplateResponse("admin_dashboard.html", {
+        "request": request,
+        "participants": participants,
+        "stats": stats
+    })
+
+@app.post("/admin/toggle/{participant_id}")
+async def admin_toggle_cert(request: Request, participant_id: int, visible: bool = True):
+    if not is_admin(request):
+        return {"error": "Unauthorized"}, 401
+    
+    toggle_cert_visibility(participant_id, visible)
+    return {"success": True, "visible": visible}
+
+@app.get("/admin/logout")
+async def admin_logout():
+    response = RedirectResponse("/", status_code=302)
+    response.delete_cookie("admin_session")
+    return response
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run("app:app", host="0.0.0.0", port=port)

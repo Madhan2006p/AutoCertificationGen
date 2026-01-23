@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Markus 2K26</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-white min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-slate-800/80 backdrop-blur-xl border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-purple-400">🎓 Admin Dashboard</h1>
+                <span class="text-slate-500 text-sm">Markus 2K26</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/sync"
+                    class="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-600/30 rounded-lg hover:bg-blue-600/30 text-sm">
+                    🔄 Sync Data
+                </a>
+                <a href="/admin/logout"
+                    class="px-4 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 text-sm">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                <div class="text-3xl font-bold text-purple-400">{{ stats.total_records }}</div>
+                <div class="text-slate-400 text-sm">Total Records</div>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                <div class="text-3xl font-bold text-blue-400">{{ stats.unique_students }}</div>
+                <div class="text-slate-400 text-sm">Unique Students</div>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                <div class="text-3xl font-bold text-green-400">{{ stats.events }}</div>
+                <div class="text-slate-400 text-sm">Events</div>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                <div class="text-3xl font-bold text-yellow-400">{{ stats.certs_generated }}</div>
+                <div class="text-slate-400 text-sm">Certs Generated</div>
+            </div>
+        </div>
+
+        <!-- Participants Table -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-lg font-bold">All Participants</h2>
+                <span class="text-slate-400 text-sm">{{ participants|length }} records</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-900/50">
+                        <tr class="text-left text-slate-400 text-sm">
+                            <th class="px-4 py-3">Roll No</th>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Department</th>
+                            <th class="px-4 py-3">Year</th>
+                            <th class="px-4 py-3">Event</th>
+                            <th class="px-4 py-3">Certificate</th>
+                            <th class="px-4 py-3 text-center">Show Cert</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        {% for p in participants %}
+                        <tr class="hover:bg-slate-700/20 transition-colors">
+                            <td class="px-4 py-3 font-mono text-purple-400">{{ p.roll_no }}</td>
+                            <td class="px-4 py-3">{{ p.name or '-' }}</td>
+                            <td class="px-4 py-3 text-slate-400">{{ p.department or '-' }}</td>
+                            <td class="px-4 py-3 text-slate-400">{{ p.year or '-' }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">
+                                    {{ p.event.replace('(Responses)', '').replace('MARKUS 2K26 - ', '')[:20] }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if p.cert_url %}
+                                <a href="{{ p.cert_url }}" target="_blank"
+                                    class="text-green-400 hover:text-green-300 text-sm">
+                                    📄 View
+                                </a>
+                                {% else %}
+                                <span class="text-slate-500 text-sm">Not generated</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer toggle-cert" data-id="{{ p.id }}" {% if
+                                        p.cert_url %}checked{% endif %} onchange="toggleCert(this, {{ p.id }})">
+                                    <div
+                                        class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600">
+                                    </div>
+                                </label>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function toggleCert(checkbox, id) {
+            const visible = checkbox.checked;
+            try {
+                const response = await fetch(`/admin/toggle/${id}?visible=${visible}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    alert('Failed to toggle');
+                    checkbox.checked = !visible;
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+                checkbox.checked = !visible;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
