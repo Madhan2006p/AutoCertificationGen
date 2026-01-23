@@ -52,8 +52,13 @@ def generate_local_certificate(name, year, event, roll_no, department=""):
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
 
-    # Format: "Department Year" (e.g., "CSE 3 Year")
-    dept_year_text = f"{department} {year} Year" if department else f"{year} Year"
+    # Convert Year to Roman if numeric
+    roman_map = {"1": "I", "2": "II", "3": "III", "4": "IV"}
+    clean_year = str(year).strip()
+    year_roman = roman_map.get(clean_year, clean_year)
+
+    # Format: "Department Year" (e.g., "CSE III Year")
+    dept_year_text = f"{department} {year_roman} Year" if department else f"{year_roman} Year"
 
     # Draw Text
     # Anchor 'lm' = Left Middle
