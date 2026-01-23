@@ -1,6 +1,6 @@
-markus.json
 __pycache__
-
+*.pyc
+participants.db
 backend/markus.json
-backend/__pycache__
-backend/certificates/
+backend/generated/
+.env

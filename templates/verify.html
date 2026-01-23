@@ -4,264 +4,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificate Verification | Mark-us 26</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>Available Certificates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: "Inter", "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #c9d1d9;
-            position: relative;
-            overflow-x: hidden;
-            padding: 20px;
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(88, 166, 255, 0.05) 0%, transparent 50%);
-            animation: pulse 8s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.5;
-            }
-
-            50% {
-                transform: scale(1.1);
-                opacity: 0.8;
-            }
-        }
-
-        .container {
-            background: rgba(22, 27, 34, 0.90);
-            backdrop-filter: blur(20px);
-            padding: 40px 35px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow:
-                0 25px 50px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(88, 166, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            text-align: center;
-            position: relative;
-            z-index: 10;
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .title {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #58a6ff 0%, #79c0ff 50%, #a5d6ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 6px;
-        }
-
-        .subtitle {
-            font-size: 13px;
-            color: #8b949e;
-            margin-bottom: 28px;
-            font-weight: 500;
-        }
-
-        .success {
-            background: linear-gradient(135deg, rgba(46, 160, 67, 0.15), rgba(35, 134, 54, 0.1));
-            border: 1px solid rgba(46, 160, 67, 0.4);
-            color: #3fb950;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            padding: 14px 20px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .error {
-            background: linear-gradient(135deg, rgba(248, 81, 73, 0.15), rgba(218, 54, 51, 0.1));
-            border: 1px solid rgba(248, 81, 73, 0.4);
-            color: #f85149;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            padding: 14px 20px;
-            border-radius: 12px;
-        }
-
-        .error-text {
-            color: #8b949e;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .record {
-            background: rgba(33, 38, 45, 0.8);
-            border: 1px solid rgba(48, 54, 61, 0.8);
-            padding: 20px;
-            border-radius: 14px;
-            margin-bottom: 16px;
-            text-align: left;
-            font-size: 14px;
-            line-height: 1.8;
-            transition: all 0.3s ease;
-        }
-
-        .record:hover {
-            border-color: rgba(88, 166, 255, 0.3);
-        }
-
-        .record-label {
-            color: #8b949e;
-            font-weight: 500;
-        }
-
-        .record-value {
-            color: #f0f6fc;
-            font-weight: 600;
-        }
-
-        .record-event {
-            display: inline-block;
-            background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(121, 192, 255, 0.1));
-            border: 1px solid rgba(88, 166, 255, 0.3);
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #58a6ff;
-            margin-top: 4px;
-        }
-
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 14px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(35, 134, 54, 0.4);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 24px;
-            font-size: 14px;
-            color: #58a6ff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .back-link:hover {
-            color: #79c0ff;
-        }
-
-        .footer {
-            margin-top: 24px;
-            font-size: 12px;
-            color: #6e7681;
-        }
-
-        .footer span {
-            color: #58a6ff;
+            font-family: 'Space Grotesk', sans-serif;
         }
     </style>
 </head>
 
-<body>
+<body class="bg-slate-900 text-white min-h-screen p-4 flex flex-col items-center">
 
-    <div class="container">
+    <div class="w-full max-w-2xl mt-12">
+        <a href="/" class="text-slate-400 hover:text-white mb-6 inline-block transition-colors">&larr; Back to
+            Search</a>
 
-        <div class="title">Mark-us 26</div>
-        <div class="subtitle">Association of CT-PG · Certificate Download Portal</div>
+        <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-2xl font-bold mb-1">Results for <span class="text-purple-400">{{ roll_no }}</span></h2>
+            <p class="text-slate-400 text-sm mb-6">Found {{ events|length }} participation records</p>
 
-        {% if status == "valid" %}
+            {% if events %}
+            <div class="space-y-4">
+                {% for item in events %}
+                <div
+                    class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group hover:border-purple-500/50 transition-all">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-200 group-hover:text-white transition-colors">{{
+                            item.display_name }}</h3>
+                        <div class="flex gap-3 text-xs text-slate-400 mt-1">
+                            <span class="px-2 py-0.5 bg-slate-800 rounded">{{ item.year }} Year</span>
+                            <span class="px-2 py-0.5 bg-slate-800 rounded">{{ item.department }}</span>
+                        </div>
+                    </div>
 
-        <div class="success">✅ Certificate Verified Successfully</div>
-
-        {% for r in records %}
-        <div class="record">
-            <span class="record-label">Name:</span>
-            <span class="record-value">{{ r.name }}</span><br>
-            <span class="record-label">Roll No:</span>
-            <span class="record-value">{{ r.roll_no | upper }}</span><br>
-            <span class="record-label">Event:</span>
-            <span class="record-event">{{ r.event }}</span>
-
-            <div>
-                <a class="download-btn" href="/download?roll={{ r.roll_no }}&event={{ r.event }}">
-                    ⬇️ Download Certificate
-                </a>
+                    {% if item.cert_url %}
+                    <a href="{{ item.cert_url }}" target="_blank"
+                        class="w-full sm:w-auto px-6 py-2 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-colors text-center font-medium">
+                        View Certificate
+                    </a>
+                    {% else %}
+                    <a href="/generate/{{ item.roll_no }}/{{ item.event }}"
+                        onclick="this.innerText='Generating...'; this.classList.add('opacity-75', 'cursor-wait');"
+                        class="w-full sm:w-auto px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg shadow-lg shadow-purple-900/20 text-center font-medium transition-all">
+                        Generate
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="text-center py-12 text-slate-500">
+                <p>No records found for this Roll Number.</p>
+                <p class="text-sm mt-2">Check the spelling or try contacting the organizers.</p>
+            </div>
+            {% endif %}
         </div>
-        {% endfor %}
-
-        {% else %}
-
-        <div class="error">❌ Certificate Not Found</div>
-        <p class="error-text">
-            The entered roll number is not available in our records.<br>
-            Please check and try again.
-        </p>
-
-        {% endif %}
-
-        <a href="/" class="back-link">← Go Back to Verification Page</a>
-
-        <div class="footer">
-            © <span>CT-PG Coding Club</span> · CT-PG Association
-        </div>
-
     </div>
 
 </body>
