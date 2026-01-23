@@ -52,7 +52,18 @@ def sync_data():
     for sheet_name in SHEETS:
         print(f"📊 Processing: {sheet_name}")
         try:
-            sheet = client.open(sheet_name).sheet1
+            spreadsheet = client.open(sheet_name)
+            
+            # Special handling for UI/UX sheet to target 'Form Responses 1'
+            if "UI/UX" in sheet_name:
+                try:
+                    sheet = spreadsheet.worksheet("Form Responses 1")
+                except gspread.WorksheetNotFound:
+                    print(f"   ⚠️ 'Form Responses 1' not found in {sheet_name}, falling back to first sheet")
+                    sheet = spreadsheet.sheet1
+            else:
+                sheet = spreadsheet.sheet1
+                
             rows = sheet.get_all_values()
             if not rows: continue
 
