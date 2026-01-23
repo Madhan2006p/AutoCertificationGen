@@ -57,12 +57,15 @@ def sync_data():
             if not rows: continue
 
             headers = rows[0]
+            print(f"   Headers: {headers[:5]}...")  # Debug: show first 5 headers
             
-            # Find Column Indices
-            idx_name = find_column(headers, ["name", "student name", "full name"])
-            idx_roll = find_column(headers, ["roll", "reg", "registration"])
+            # Find Column Indices - expanded keywords
+            idx_name = find_column(headers, ["name with initial", "name", "student name", "full name", "leader name"])
+            idx_roll = find_column(headers, ["roll no", "roll", "reg", "registration", "leader roll"])
             idx_dept = find_column(headers, ["department", "dept", "branch"])
             idx_year = find_column(headers, ["year", "yr", "batch"])
+            
+            print(f"   Column indices - Name:{idx_name}, Roll:{idx_roll}, Dept:{idx_dept}, Year:{idx_year}")
             
             # Process Rows
             count = 0
