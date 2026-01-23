@@ -54,14 +54,8 @@ async def verify(request: Request, roll_no: str = Form(...)):
     return templates.TemplateResponse("verify.html", {"request": request, "events": clean_events, "roll_no": roll_no})
 
 @app.get("/generate/{roll_no}/{event_id}")
-async def generate(request: Request, roll_no: str, event_id: str): # Using event name as ID for now
-    # Security/Validation needed?
-    # Logic: 
-    # 1. Check if cert_url exists in DB
-    # 2. If yes, redirect
-    # 3. If no, generate, upload, save, redirect
-    
-    # We need to fetch full record to get Name/Year
+async def generate(request: Request, roll_no: str, event_id: str):
+    # Fetch record from DB
     events = get_events_for_roll(roll_no)
     record = next((e for e in events if e["event"] == event_id), None)
     
@@ -71,28 +65,32 @@ async def generate(request: Request, roll_no: str, event_id: str): # Using event
     if record["cert_url"]:
         return RedirectResponse(record["cert_url"])
         
-    # Generate
+    # Generate certificate
     try:
-        local_path = generate_local_certificate(record["name"], record["year"], record["display_name"], roll_no) # Use display name on cert? Or official?
-        # User said "Event: (1301, 294)". Usually official name is too long.
-        # Let's use the full name from DB "event" but maybe strip " (Responses)"
-        clean_event_name = record["event"].replace("(Responses)", "").replace("MARKUS 2K26 - ", "").strip()
+        # Clean event name for display on certificate
+        clean_event_name = record["event"].replace("(Responses)", "").replace("MARKUS 2K26 - ", "").replace("MARKUS ", "").strip()
         
-        # Regenerate with clean name
-        local_path = generate_local_certificate(record["name"], record["year"], clean_event_name, roll_no)
+        local_path = generate_local_certificate(
+            name=record["name"], 
+            year=record["year"], 
+            event=clean_event_name, 
+            roll_no=roll_no
+        )
         
-        # Upload
+        # Upload to Cloudinary
         print(f"Uploading {local_path}...")
         res = cloudinary.uploader.upload(local_path, folder="markus_certs")
         url = res.get("secure_url")
         
-        # Update DB
+        # Update DB with certificate URL
         update_cert_url(roll_no, event_id, url)
         
         return RedirectResponse(url)
         
     except Exception as e:
         print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
         return HTMLResponse(f"Error generating certificate: {e}", status_code=500)
 
 @app.get("/sync")
