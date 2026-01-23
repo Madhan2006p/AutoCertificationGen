@@ -12,7 +12,7 @@ cloudinary.config(
     secure=True
 )
 
-def generate_and_upload_cert(roll_no, name, event, year):
+def generate_and_upload_cert(roll_no, name, event, year, dept=""):
     """
     Generate certificate, upload to Cloudinary, and update database.
     This is called exclusively by app.py after race condition checks.
@@ -21,7 +21,7 @@ def generate_and_upload_cert(roll_no, name, event, year):
     
     # 1. Generate local file
     try:
-        path = generate_certificate(name, roll_no, event, year)
+        path = generate_certificate(name, roll_no, event, year, dept)
     except Exception as e:
         print(f"Error generating certificate: {e}")
         return None

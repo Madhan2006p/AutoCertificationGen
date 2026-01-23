@@ -111,10 +111,17 @@ def refresh():
                     if not name:
                         continue # Skip if name not found in form
                         
+                    if not name:
+                        continue # Skip if name not found in form
+                    
+                    # Extract Department
+                    dept = normalize_department(record.get(config["dept_column"], ""))
+
                     all_participants.append({
                         "roll_no": roll_no.lower(), # Store as lowercase for consistency
                         "name": name,
                         "year": get_year_from_roll(roll_no),
+                        "dept": dept,
                         "event": config["display_name"]
                     })
                     count += 1

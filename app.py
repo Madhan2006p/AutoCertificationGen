@@ -165,7 +165,8 @@ async def download(request: Request, roll: str, event: str):
                 roll_no=roll, 
                 name=user_record['name'], 
                 event=event, 
-                year=user_record['year']
+                year=user_record['year'],
+                dept=user_record.get('dept', '') # Add department
             )
             return RedirectResponse(new_url)
         finally:
