@@ -17,9 +17,16 @@ def init_db():
             year TEXT,
             event TEXT NOT NULL,
             sheet_source TEXT,
-            cert_url TEXT
+            cert_url TEXT,
+            blocked INTEGER DEFAULT 0
         )
     """)
+    
+    # Add blocked column if missing (migration for existing DB)
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN blocked INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     # Index for faster lookup
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_roll_event ON participants(roll_no, event)")
@@ -78,14 +85,23 @@ def get_all_participants():
     return [dict(row) for row in rows]
 
 def toggle_cert_visibility(participant_id, visible):
-    """Toggle certificate visibility (clear or restore cert_url)"""
+    """Toggle certificate visibility using blocked field"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    if not visible:
-        # Hide: backup URL to a temp field and clear cert_url
-        cursor.execute("UPDATE participants SET cert_url = NULL WHERE id = ?", (participant_id,))
+    # Set blocked = 1 to hide, blocked = 0 to show
+    blocked = 0 if visible else 1
+    cursor.execute("UPDATE participants SET blocked = ? WHERE id = ?", (blocked, participant_id))
     conn.commit()
     conn.close()
+
+def is_participant_blocked(roll_no, event):
+    """Check if a participant is blocked from getting certificate"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT blocked FROM participants WHERE roll_no = ? AND event = ?", (roll_no, event))
+    row = cursor.fetchone()
+    conn.close()
+    return row and row[0] == 1
 
 def get_stats():
     """Get admin stats"""

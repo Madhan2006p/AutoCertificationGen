@@ -43,9 +43,12 @@ async def verify(request: Request, roll_no: str = Form(...)):
     roll_no = roll_no.strip().upper()
     events = get_events_for_roll(roll_no)
     
-    # Filter cleaning
+    # Filter cleaning - exclude blocked participants
     clean_events = []
     for e in events:
+        # Skip blocked participants
+        if e.get("blocked") == 1:
+            continue
         # Simplify display name
         d_name = e["event"].replace("MARKUS 2K26 - ", "").replace("(Responses)", "").strip()
         e["display_name"] = d_name
@@ -55,12 +58,18 @@ async def verify(request: Request, roll_no: str = Form(...)):
 
 @app.get("/generate/{roll_no}/{event_id}")
 async def generate(request: Request, roll_no: str, event_id: str):
+    from backend.database import is_participant_blocked
+    
     # Fetch record from DB
     events = get_events_for_roll(roll_no)
     record = next((e for e in events if e["event"] == event_id), None)
     
     if not record:
         return HTMLResponse("Record not found", status_code=404)
+    
+    # Check if blocked by admin
+    if record.get("blocked") == 1 or is_participant_blocked(roll_no, event_id):
+        return HTMLResponse("Certificate generation is disabled for this participant.", status_code=403)
         
     if record["cert_url"]:
         return RedirectResponse(record["cert_url"])
