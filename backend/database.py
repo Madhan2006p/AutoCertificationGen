@@ -79,7 +79,7 @@ def get_all_participants():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM participants ORDER BY roll_no, event")
+    cursor.execute("SELECT * FROM participants ORDER BY event, roll_no")
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
