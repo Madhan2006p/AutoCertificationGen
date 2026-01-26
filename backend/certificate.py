@@ -66,21 +66,7 @@ def generate_local_certificate(name, year, event, roll_no, department=""):
     draw.text(COORD_YEAR, dept_year_text.upper(), fill="black", font=font_small, anchor="lm")
     draw.text(COORD_EVENT, str(event).upper(), fill="black", font=font_small, anchor="lm")
 
-    # Add Footer Text
-    footer_text = "CT-PG Association Club | CT-PG Coding Club"
-    # Centered at bottom
-    W, H = img.size
-    # Using smaller font for footer
-    font_footer = font_small
-    try:
-        # Check if we can load a slightly smaller/different font? reusing font_small for now (size 35)
-        # Maybe scale it down to 25?
-        if font_large.path: # If we have a path from before
-             font_footer = ImageFont.truetype(font_large.path, 25)
-    except:
-        pass
-        
-    draw.text((W/2, H - 50), footer_text, fill="black", font=font_footer, anchor="mm")
+    # Footer text removed as requested
 
     # Output
     out_dir = os.path.join(BASE_DIR, "generated")
