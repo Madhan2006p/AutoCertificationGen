@@ -76,22 +76,29 @@ def sync_data():
             idx_dept = find_column(headers, ["department", "dept", "branch"])
             idx_year = find_column(headers, ["year", "yr", "batch"])
             
-            # Find all team member name columns
-            team_member_indices = []
+            # Find all team member columns (names and roll numbers)
+            team_member_name_indices = []
+            team_member_roll_indices = []
+            
             for idx, h in enumerate(headers):
                 h_lower = h.lower()
-                # Look for team member columns
+                # Look for team member name columns
                 if ("team member" in h_lower or "member" in h_lower) and "name" in h_lower:
-                    team_member_indices.append(idx)
+                    team_member_name_indices.append(idx)
+                # Look for team member roll number columns
+                if ("team member" in h_lower or "member" in h_lower) and ("roll" in h_lower or "reg" in h_lower):
+                    team_member_roll_indices.append(idx)
             
             print(f"   Column indices - Name:{idx_name}, Roll:{idx_roll}, Dept:{idx_dept}, Year:{idx_year}")
-            if team_member_indices:
-                print(f"   Team member name columns found at indices: {team_member_indices}")
+            if team_member_name_indices:
+                print(f"   Team member name columns: {team_member_name_indices}")
+            if team_member_roll_indices:
+                print(f"   Team member roll columns: {team_member_roll_indices}")
             
             # Process Rows
             count = 0
             for row in rows[1:]:
-                # Safely get values
+                # Safely get leader values
                 roll = row[idx_roll].strip().upper() if idx_roll != -1 and idx_roll < len(row) else ""
                 
                 # Basic validation
@@ -101,14 +108,23 @@ def sync_data():
                 dept = row[idx_dept].strip() if idx_dept != -1 and idx_dept < len(row) else ""
                 year = row[idx_year].strip() if idx_year != -1 and idx_year < len(row) else ""
                 
-                # Extract team member names
-                team_members_list = []
-                for tm_idx in team_member_indices:
-                    if tm_idx < len(row) and row[tm_idx].strip():
-                        team_members_list.append(row[tm_idx].strip())
-                
-                # Join team members with comma separator
-                team_members = ", ".join(team_members_list) if team_members_list else None
+                # Extract team members with their individual roll numbers
+                team_members_data = []
+                for i, name_idx in enumerate(team_member_name_indices):
+                    member_name = row[name_idx].strip() if name_idx < len(row) else ""
+                    
+                    # Get corresponding roll number
+                    member_roll = None
+                    if i < len(team_member_roll_indices):
+                        roll_idx = team_member_roll_indices[i]
+                        member_roll = row[roll_idx].strip().upper() if roll_idx < len(row) and row[roll_idx].strip() else None
+                    
+                    # Add if we have a name
+                    if member_name:
+                        team_members_data.append({
+                            "name": member_name,
+                            "roll_no": member_roll
+                        })
                 
                 # Fallback Year extraction from Roll
                 if not year:
@@ -117,7 +133,7 @@ def sync_data():
                     elif roll.startswith("23"): year = "III"
                     elif roll.startswith("22"): year = "IV"
                 
-                save_participant(roll, name, dept, year, sheet_name, sheet_name, team_members)
+                save_participant(roll, name, dept, year, sheet_name, sheet_name, team_members_data)
                 count += 1
             print(f"   ✅ Saved {count} records.")
 

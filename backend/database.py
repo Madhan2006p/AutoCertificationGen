@@ -74,21 +74,28 @@ def save_participant(roll_no, name, dept, year, event, sheet_source, team_member
         year: Year
         event: Event name
         sheet_source: Source sheet name
-        team_members: List of team member names or comma-separated string
+        team_members: List of dicts with 'name' and 'roll_no', OR list of names, OR comma-separated string
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Convert team_members to list if it's a string
+    # Normalize team_members to list of dicts
+    team_members_data = []
     if isinstance(team_members, str):
-        team_members_list = [tm.strip() for tm in team_members.split(',') if tm.strip()]
+        # Legacy: comma-separated string
+        for tm in team_members.split(','):
+            if tm.strip():
+                team_members_data.append({"name": tm.strip(), "roll_no": None})
     elif isinstance(team_members, list):
-        team_members_list = team_members
-    else:
-        team_members_list = []
+        for tm in team_members:
+            if isinstance(tm, dict):
+                team_members_data.append(tm)
+            elif isinstance(tm, str) and tm.strip():
+                team_members_data.append({"name": tm.strip(), "roll_no": None})
     
-    # Join for storage in team_members field
-    team_members_str = ", ".join(team_members_list) if team_members_list else None
+    # Create display string for team_members column
+    team_names = [tm.get('name', '') for tm in team_members_data if tm.get('name')]
+    team_members_str = ", ".join(team_names) if team_names else None
     
     # Upsert leader record (checking roll_no + event + member_role)
     cursor.execute("""
@@ -115,14 +122,18 @@ def save_participant(roll_no, name, dept, year, event, sheet_source, team_member
         WHERE leader_roll_no = ? AND event = ? AND member_role = 'member'
     """, (roll_no, event))
     
-    # Insert individual records for each team member
-    for idx, member_name in enumerate(team_members_list, start=1):
-        cursor.execute("""
-            INSERT INTO participants (
-                roll_no, name, department, year, event, sheet_source, 
-                member_role, leader_roll_no, member_position
-            ) VALUES (?, ?, ?, ?, ?, ?, 'member', ?, ?)
-        """, (roll_no, member_name, dept, year, event, sheet_source, roll_no, idx))
+    # Insert individual records for each team member with their own roll number
+    for idx, member in enumerate(team_members_data, start=1):
+        member_name = member.get('name', '').strip()
+        member_roll = member.get('roll_no') or roll_no  # Use member's roll or fallback to leader's
+        
+        if member_name:
+            cursor.execute("""
+                INSERT INTO participants (
+                    roll_no, name, department, year, event, sheet_source, 
+                    member_role, leader_roll_no, member_position
+                ) VALUES (?, ?, ?, ?, ?, ?, 'member', ?, ?)
+            """, (member_roll, member_name, dept, year, event, sheet_source, roll_no, idx))
         
     conn.commit()
     conn.close()
