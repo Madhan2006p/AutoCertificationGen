@@ -19,7 +19,10 @@ def init_db():
             sheet_source TEXT,
             cert_url TEXT,
             blocked INTEGER DEFAULT 0,
-            team_members TEXT
+            team_members TEXT,
+            member_role TEXT DEFAULT 'leader',
+            leader_roll_no TEXT,
+            member_position INTEGER DEFAULT 0
         )
     """)
     
@@ -35,6 +38,24 @@ def init_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
     
+    # Add member_role column if missing (migration for existing DB)
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN member_role TEXT DEFAULT 'leader'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    # Add leader_roll_no column if missing (migration for existing DB)
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN leader_roll_no TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    # Add member_position column if missing (migration for existing DB)
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN member_position INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
     # Index for faster lookup
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_roll_event ON participants(roll_no, event)")
     
@@ -43,11 +64,37 @@ def init_db():
     print("✅ Database initialized")
 
 def save_participant(roll_no, name, dept, year, event, sheet_source, team_members=None):
+    """
+    Save participant (leader) and optionally their team members as separate records.
+    
+    Args:
+        roll_no: Leader's roll number
+        name: Leader's name
+        dept: Department
+        year: Year
+        event: Event name
+        sheet_source: Source sheet name
+        team_members: List of team member names or comma-separated string
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Upsert logic (checking roll_no + event)
-    cursor.execute("SELECT id FROM participants WHERE roll_no = ? AND event = ?", (roll_no, event))
+    # Convert team_members to list if it's a string
+    if isinstance(team_members, str):
+        team_members_list = [tm.strip() for tm in team_members.split(',') if tm.strip()]
+    elif isinstance(team_members, list):
+        team_members_list = team_members
+    else:
+        team_members_list = []
+    
+    # Join for storage in team_members field
+    team_members_str = ", ".join(team_members_list) if team_members_list else None
+    
+    # Upsert leader record (checking roll_no + event + member_role)
+    cursor.execute("""
+        SELECT id FROM participants 
+        WHERE roll_no = ? AND event = ? AND member_role = 'leader'
+    """, (roll_no, event))
     existing = cursor.fetchone()
     
     if existing:
@@ -55,12 +102,27 @@ def save_participant(roll_no, name, dept, year, event, sheet_source, team_member
             UPDATE participants 
             SET name = ?, department = ?, year = ?, sheet_source = ?, team_members = ?
             WHERE id = ?
-        """, (name, dept, year, sheet_source, team_members, existing[0]))
+        """, (name, dept, year, sheet_source, team_members_str, existing[0]))
     else:
         cursor.execute("""
-            INSERT INTO participants (roll_no, name, department, year, event, sheet_source, team_members)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (roll_no, name, dept, year, event, sheet_source, team_members))
+            INSERT INTO participants (roll_no, name, department, year, event, sheet_source, team_members, member_role, member_position)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'leader', 0)
+        """, (roll_no, name, dept, year, event, sheet_source, team_members_str))
+    
+    # Delete existing team member records for this leader/event combination
+    cursor.execute("""
+        DELETE FROM participants 
+        WHERE leader_roll_no = ? AND event = ? AND member_role = 'member'
+    """, (roll_no, event))
+    
+    # Insert individual records for each team member
+    for idx, member_name in enumerate(team_members_list, start=1):
+        cursor.execute("""
+            INSERT INTO participants (
+                roll_no, name, department, year, event, sheet_source, 
+                member_role, leader_roll_no, member_position
+            ) VALUES (?, ?, ?, ?, ?, ?, 'member', ?, ?)
+        """, (roll_no, member_name, dept, year, event, sheet_source, roll_no, idx))
         
     conn.commit()
     conn.close()
