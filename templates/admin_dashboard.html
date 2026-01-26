@@ -96,6 +96,7 @@
                             <th class="px-4 py-2">Name</th>
                             <th class="px-4 py-2">Department</th>
                             <th class="px-4 py-2">Year</th>
+                            <th class="px-4 py-2">Team Members</th>
                             <th class="px-4 py-2">Certificate</th>
                             <th class="px-4 py-2 text-center">Show Cert</th>
                         </tr>
@@ -108,6 +109,13 @@
                             <td class="px-4 py-2 text-sm">{{ p.name or '-' }}</td>
                             <td class="px-4 py-2 text-slate-400 text-sm">{{ p.department or '-' }}</td>
                             <td class="px-4 py-2 text-slate-400 text-sm">{{ p.year or '-' }}</td>
+                            <td class="px-4 py-2 text-sm">
+                                {% if p.team_members %}
+                                <span class="text-blue-400">{{ p.team_members }}</span>
+                                {% else %}
+                                <span class="text-slate-500">-</span>
+                                {% endif %}
+                            </td>
                             <td class="px-4 py-2">
                                 {% if p.cert_url %}
                                 <a href="{{ p.cert_url }}" target="_blank"

@@ -18,13 +18,20 @@ def init_db():
             event TEXT NOT NULL,
             sheet_source TEXT,
             cert_url TEXT,
-            blocked INTEGER DEFAULT 0
+            blocked INTEGER DEFAULT 0,
+            team_members TEXT
         )
     """)
     
     # Add blocked column if missing (migration for existing DB)
     try:
         cursor.execute("ALTER TABLE participants ADD COLUMN blocked INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    # Add team_members column if missing (migration for existing DB)
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN team_members TEXT")
     except sqlite3.OperationalError:
         pass  # Column already exists
     
@@ -35,7 +42,7 @@ def init_db():
     conn.close()
     print("✅ Database initialized")
 
-def save_participant(roll_no, name, dept, year, event, sheet_source):
+def save_participant(roll_no, name, dept, year, event, sheet_source, team_members=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -46,14 +53,14 @@ def save_participant(roll_no, name, dept, year, event, sheet_source):
     if existing:
         cursor.execute("""
             UPDATE participants 
-            SET name = ?, department = ?, year = ?, sheet_source = ?
+            SET name = ?, department = ?, year = ?, sheet_source = ?, team_members = ?
             WHERE id = ?
-        """, (name, dept, year, sheet_source, existing[0]))
+        """, (name, dept, year, sheet_source, team_members, existing[0]))
     else:
         cursor.execute("""
-            INSERT INTO participants (roll_no, name, department, year, event, sheet_source)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (roll_no, name, dept, year, event, sheet_source))
+            INSERT INTO participants (roll_no, name, department, year, event, sheet_source, team_members)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (roll_no, name, dept, year, event, sheet_source, team_members))
         
     conn.commit()
     conn.close()

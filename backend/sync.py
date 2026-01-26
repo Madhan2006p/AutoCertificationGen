@@ -76,21 +76,23 @@ def sync_data():
             idx_dept = find_column(headers, ["department", "dept", "branch"])
             idx_year = find_column(headers, ["year", "yr", "batch"])
             
+            # Find all team member name columns
+            team_member_indices = []
+            for idx, h in enumerate(headers):
+                h_lower = h.lower()
+                # Look for team member columns
+                if ("team member" in h_lower or "member" in h_lower) and "name" in h_lower:
+                    team_member_indices.append(idx)
+            
             print(f"   Column indices - Name:{idx_name}, Roll:{idx_roll}, Dept:{idx_dept}, Year:{idx_year}")
+            if team_member_indices:
+                print(f"   Team member name columns found at indices: {team_member_indices}")
             
             # Process Rows
             count = 0
             for row in rows[1:]:
                 # Safely get values
                 roll = row[idx_roll].strip().upper() if idx_roll != -1 and idx_roll < len(row) else ""
-                
-                # Specialized logic for team members?
-                # The user said "Search the coloumn".
-                # If there are multiple fields (Team member 1, 2), a simple linear search might miss them.
-                # However, for the MVP "Fetch... Name, Dept, Year", looking for the PRIMARY columns is safest.
-                # If the user wants ALL team members, we'd need to iterate header patterns.
-                # Let's assume standard single-entry for now or primary leader.
-                # Use a specific logic if roll is empty?
                 
                 # Basic validation
                 if not roll or len(roll) < 5: continue
@@ -99,6 +101,15 @@ def sync_data():
                 dept = row[idx_dept].strip() if idx_dept != -1 and idx_dept < len(row) else ""
                 year = row[idx_year].strip() if idx_year != -1 and idx_year < len(row) else ""
                 
+                # Extract team member names
+                team_members_list = []
+                for tm_idx in team_member_indices:
+                    if tm_idx < len(row) and row[tm_idx].strip():
+                        team_members_list.append(row[tm_idx].strip())
+                
+                # Join team members with comma separator
+                team_members = ", ".join(team_members_list) if team_members_list else None
+                
                 # Fallback Year extraction from Roll
                 if not year:
                     if roll.startswith("25"): year = "I"
@@ -106,7 +117,7 @@ def sync_data():
                     elif roll.startswith("23"): year = "III"
                     elif roll.startswith("22"): year = "IV"
                 
-                save_participant(roll, name, dept, year, sheet_name, sheet_name)
+                save_participant(roll, name, dept, year, sheet_name, sheet_name, team_members)
                 count += 1
             print(f"   ✅ Saved {count} records.")
 
