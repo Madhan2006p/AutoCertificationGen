@@ -13,7 +13,8 @@ SHEETS = [
     "MARKUS Technical Quiz (Responses)",
     "CHILL & SKILL (Responses)",
     "UI/UX (Responses)",  # Fixed spacing
-    "Paper (Responses)" # Adjusted assumption
+    "Paper (Responses)", # Adjusted assumption
+    "Markus 2k26 - IPL AUCTION (Responses)"
 ]
 
 def get_client():
@@ -164,7 +165,7 @@ def sync_data():
             print(f"   ✅ Saved {count} records.")
 
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"   ❌ Error processing {sheet_name}: {e}")
 
 if __name__ == "__main__":
     sync_data()
