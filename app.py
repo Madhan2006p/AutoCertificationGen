@@ -110,7 +110,7 @@ async def manual_sync():
     return {"status": "Sync started in background"}
 
 # ========== ADMIN PORTAL ==========
-from backend.database import get_all_participants, toggle_cert_visibility, get_stats
+from backend.database import get_all_participants, toggle_cert_visibility, bulk_toggle_cert_visibility, get_stats
 
 ADMIN_USERNAME = "Madhan2006p"
 ADMIN_PASSWORD = "iamironman"
@@ -152,6 +152,14 @@ async def admin_toggle_cert(request: Request, participant_id: int, visible: bool
         return {"error": "Unauthorized"}, 401
     
     toggle_cert_visibility(participant_id, visible)
+    return {"success": True, "visible": visible}
+
+@app.post("/admin/toggle-all")
+async def admin_toggle_all(request: Request, visible: bool = True):
+    if not is_admin(request):
+        return {"error": "Unauthorized"}, 401
+    
+    bulk_toggle_cert_visibility(visible)
     return {"success": True, "visible": visible}
 
 @app.get("/admin/logout")

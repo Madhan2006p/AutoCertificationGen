@@ -215,6 +215,15 @@ def toggle_cert_visibility(participant_id, visible):
     conn.commit()
     conn.close()
 
+def bulk_toggle_cert_visibility(visible):
+    """Bulk toggle certificate visibility for ALL participants"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    blocked = 0 if visible else 1
+    cursor.execute("UPDATE participants SET blocked = ?", (blocked,))
+    conn.commit()
+    conn.close()
+
 def is_participant_blocked(roll_no, event):
     """Check if a participant is blocked from getting certificate"""
     conn = sqlite3.connect(DB_PATH)

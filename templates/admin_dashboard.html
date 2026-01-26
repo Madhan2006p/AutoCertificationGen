@@ -29,6 +29,18 @@
                     class="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-600/30 rounded-lg hover:bg-blue-600/30 text-sm">
                     🔄 Sync Data
                 </a>
+
+                <div class="flex items-center gap-2 border-l border-r border-slate-700 px-4">
+                    <button onclick="toggleAllCerts(true)"
+                        class="px-3 py-2 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg hover:bg-green-600/30 text-sm font-medium transition-colors">
+                        ✅ Enable All
+                    </button>
+                    <button onclick="toggleAllCerts(false)"
+                        class="px-3 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 text-sm font-medium transition-colors">
+                        🚫 Disable All
+                    </button>
+                </div>
+
                 <a href="/admin/logout"
                     class="px-4 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 text-sm">
                     Logout
@@ -36,6 +48,32 @@
             </div>
         </div>
     </header>
+
+    <script>
+        async function toggleAllCerts(visible) {
+            if (!confirm(`Are you sure you want to ${visible ? 'ENABLE' : 'DISABLE'} certificate generation for ALL participants?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/toggle-all?visible=${visible}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // visual update of all toggles
+                    document.querySelectorAll('.toggle-cert').forEach(el => {
+                        el.checked = visible;
+                    });
+                    alert(`Successfully ${visible ? 'ENABLED' : 'DISABLED'} all certificates!`);
+                } else {
+                    alert('Failed to update settings');
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+    </script>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
 
