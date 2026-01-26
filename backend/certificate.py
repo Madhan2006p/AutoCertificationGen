@@ -72,7 +72,7 @@ def generate_local_certificate(name, year, event, roll_no, department=""):
     out_dir = os.path.join(BASE_DIR, "generated")
     os.makedirs(out_dir, exist_ok=True)
     
-    filename = f"{roll_no}_{event.replace(' ', '_')}.png"
+    filename = f"{roll_no}_{event.replace(' ', '_').replace('/', '_')}.png"
     filepath = os.path.join(out_dir, filename)
     
     img.save(filepath)
