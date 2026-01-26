@@ -44,6 +44,18 @@ def find_column(headers, keywords):
                 return idx
     return -1
 
+
+# Mapping for prettier certificate event names
+EVENT_MAPPING = {
+    "MARKUS 2K26 -  CODE ADAPT (Responses)": "CODE ADAPT",
+    "MARKUS Project Presentation 2k26 (Responses)": "PROJECT PRESENTATION",
+    "MARKUS Technical Quiz (Responses)": "TECHNICAL QUIZ",
+    "CHILL & SKILL (Responses)": "CHILL & SKILL",
+    "UI/UX (Responses)": "UI/UX",
+    "Paper (Responses)": "PAPER PRESENTATION",
+    "Markus 2k26 - IPL AUCTION (Responses)": "IPL AUCTION"
+}
+
 def sync_data():
     print("🔄 Syncing Data...")
     init_db()
@@ -52,6 +64,9 @@ def sync_data():
 
     for sheet_name in SHEETS:
         print(f"📊 Processing: {sheet_name}")
+        # Determine pretty event name
+        event_name = EVENT_MAPPING.get(sheet_name, sheet_name.replace(" (Responses)", "").replace("Markus 2k26 - ", "").strip())
+        
         try:
             spreadsheet = client.open(sheet_name)
             
@@ -160,7 +175,7 @@ def sync_data():
                     })
                 
                 # Save leader and team members
-                save_participant(leader_roll, leader_name, dept, year, sheet_name, sheet_name, team_members_data)
+                save_participant(leader_roll, leader_name, dept, year, event_name, sheet_name, team_members_data)
                 count += 1
             print(f"   ✅ Saved {count} records.")
 
