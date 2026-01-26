@@ -76,64 +76,89 @@ def sync_data():
             idx_dept = find_column(headers, ["department", "dept", "branch"])
             idx_year = find_column(headers, ["year", "yr", "batch"])
             
-            # Find all team member columns (names and roll numbers)
-            team_member_name_indices = []
-            team_member_roll_indices = []
+            # Find team member columns (paired name and roll columns)
+            # Look for patterns like "Team Member 1 Name", "Team Member 1 Roll No"
+            team_member_cols = []  # List of (name_idx, roll_idx) tuples
             
             for idx, h in enumerate(headers):
                 h_lower = h.lower()
-                # Look for team member name columns
-                if ("team member" in h_lower or "member" in h_lower) and "name" in h_lower:
-                    team_member_name_indices.append(idx)
-                # Look for team member roll number columns
-                if ("team member" in h_lower or "member" in h_lower) and ("roll" in h_lower or "reg" in h_lower):
-                    team_member_roll_indices.append(idx)
+                # Match patterns like "team member 1", "team member 2", etc.
+                match = re.search(r'team\s*member\s*(\d+)', h_lower)
+                if match:
+                    member_num = match.group(1)
+                    if 'name' in h_lower:
+                        # Find corresponding roll column for this member number
+                        roll_idx = -1
+                        for idx2, h2 in enumerate(headers):
+                            h2_lower = h2.lower()
+                            if f'team member {member_num}' in h2_lower.replace('  ', ' ') and ('roll' in h2_lower or 'reg' in h2_lower):
+                                roll_idx = idx2
+                                break
+                            # Also check format "team member{num}"
+                            if re.search(rf'team\s*member\s*{member_num}', h2_lower) and ('roll' in h2_lower or 'reg' in h2_lower):
+                                roll_idx = idx2
+                                break
+                        team_member_cols.append((idx, roll_idx, member_num))
+            
+            # Sort by member number
+            team_member_cols.sort(key=lambda x: int(x[2]))
             
             print(f"   Column indices - Name:{idx_name}, Roll:{idx_roll}, Dept:{idx_dept}, Year:{idx_year}")
-            if team_member_name_indices:
-                print(f"   Team member name columns: {team_member_name_indices}")
-            if team_member_roll_indices:
-                print(f"   Team member roll columns: {team_member_roll_indices}")
+            if team_member_cols:
+                print(f"   Team member columns: {[(f'Name:{n}, Roll:{r}') for n, r, _ in team_member_cols]}")
             
             # Process Rows
             count = 0
             for row in rows[1:]:
                 # Safely get leader values
-                roll = row[idx_roll].strip().upper() if idx_roll != -1 and idx_roll < len(row) else ""
+                leader_roll = row[idx_roll].strip().upper() if idx_roll != -1 and idx_roll < len(row) else ""
                 
-                # Basic validation
-                if not roll or len(roll) < 5: continue
+                # Basic validation for leader
+                if not leader_roll or len(leader_roll) < 5: continue
                 
-                name = row[idx_name].strip().upper() if idx_name != -1 and idx_name < len(row) else ""
+                leader_name = row[idx_name].strip().upper() if idx_name != -1 and idx_name < len(row) else ""
                 dept = row[idx_dept].strip() if idx_dept != -1 and idx_dept < len(row) else ""
                 year = row[idx_year].strip() if idx_year != -1 and idx_year < len(row) else ""
                 
-                # Extract team members with their individual roll numbers
-                team_members_data = []
-                for i, name_idx in enumerate(team_member_name_indices):
-                    member_name = row[name_idx].strip() if name_idx < len(row) else ""
-                    
-                    # Get corresponding roll number
-                    member_roll = None
-                    if i < len(team_member_roll_indices):
-                        roll_idx = team_member_roll_indices[i]
-                        member_roll = row[roll_idx].strip().upper() if roll_idx < len(row) and row[roll_idx].strip() else None
-                    
-                    # Add if we have a name
-                    if member_name:
-                        team_members_data.append({
-                            "name": member_name,
-                            "roll_no": member_roll
-                        })
-                
                 # Fallback Year extraction from Roll
                 if not year:
-                    if roll.startswith("25"): year = "I"
-                    elif roll.startswith("24"): year = "II"
-                    elif roll.startswith("23"): year = "III"
-                    elif roll.startswith("22"): year = "IV"
+                    if leader_roll.startswith("25"): year = "I"
+                    elif leader_roll.startswith("24"): year = "II"
+                    elif leader_roll.startswith("23"): year = "III"
+                    elif leader_roll.startswith("22"): year = "IV"
                 
-                save_participant(roll, name, dept, year, sheet_name, sheet_name, team_members_data)
+                # Extract team members with individual roll numbers
+                team_members_data = []  # List of {name, roll_no} dicts
+                processed_rolls = set()  # Track rolls to prevent duplicates
+                processed_rolls.add(leader_roll)  # Leader's roll is already used
+                
+                for name_idx, roll_idx, member_num in team_member_cols:
+                    member_name = row[name_idx].strip() if name_idx < len(row) else ""
+                    member_roll = ""
+                    if roll_idx != -1 and roll_idx < len(row):
+                        member_roll = row[roll_idx].strip().upper()
+                    
+                    # Skip if no name OR no roll number (as per requirements)
+                    if not member_name or not member_roll:
+                        continue
+                    
+                    # Skip if roll number is too short (invalid)
+                    if len(member_roll) < 5:
+                        continue
+                    
+                    # Skip duplicate roll numbers (one certificate per roll)
+                    if member_roll in processed_rolls:
+                        print(f"   ⚠️ Skipping duplicate roll: {member_roll}")
+                        continue
+                    
+                    processed_rolls.add(member_roll)
+                    team_members_data.append({
+                        "name": member_name,
+                        "roll_no": member_roll
+                    })
+                
+                # Save leader and team members
+                save_participant(leader_roll, leader_name, dept, year, sheet_name, sheet_name, team_members_data)
                 count += 1
             print(f"   ✅ Saved {count} records.")
 

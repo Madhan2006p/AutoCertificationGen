@@ -74,28 +74,32 @@ def save_participant(roll_no, name, dept, year, event, sheet_source, team_member
         year: Year
         event: Event name
         sheet_source: Source sheet name
-        team_members: List of dicts with 'name' and 'roll_no', OR list of names, OR comma-separated string
+        team_members: List of dicts with 'name' and 'roll_no' keys, OR comma-separated string (legacy support)
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Normalize team_members to list of dicts
+    # Convert team_members to standardized format
     team_members_data = []
+    
     if isinstance(team_members, str):
-        # Legacy: comma-separated string
-        for tm in team_members.split(','):
-            if tm.strip():
-                team_members_data.append({"name": tm.strip(), "roll_no": None})
+        # Legacy: comma-separated string of names only
+        for tm_name in team_members.split(','):
+            if tm_name.strip():
+                team_members_data.append({"name": tm_name.strip(), "roll_no": None})
     elif isinstance(team_members, list):
         for tm in team_members:
             if isinstance(tm, dict):
+                # New format: dict with name and roll_no
                 team_members_data.append(tm)
-            elif isinstance(tm, str) and tm.strip():
-                team_members_data.append({"name": tm.strip(), "roll_no": None})
+            elif isinstance(tm, str):
+                # String name only
+                if tm.strip():
+                    team_members_data.append({"name": tm.strip(), "roll_no": None})
     
     # Create display string for team_members column
-    team_names = [tm.get('name', '') for tm in team_members_data if tm.get('name')]
-    team_members_str = ", ".join(team_names) if team_names else None
+    team_members_names = [tm.get('name', '') for tm in team_members_data if tm.get('name')]
+    team_members_str = ", ".join(team_members_names) if team_members_names else None
     
     # Upsert leader record (checking roll_no + event + member_role)
     cursor.execute("""
@@ -125,15 +129,52 @@ def save_participant(roll_no, name, dept, year, event, sheet_source, team_member
     # Insert individual records for each team member with their own roll number
     for idx, member in enumerate(team_members_data, start=1):
         member_name = member.get('name', '').strip()
-        member_roll = member.get('roll_no') or roll_no  # Use member's roll or fallback to leader's
+        member_roll = member.get('roll_no') 
         
+        # Validation: Members must have a name to be saved
         if member_name:
-            cursor.execute("""
+             # If roll number is missing/empty, DO NOT create a certificate-eligible record
+             # We will create a record for display, but flag it or leave roll empty if permitted.
+             # However, User Requirement says: "duplicate roll numbers must result in only one certificate"
+             # and "If a team member’s roll number is missing or empty, leave that member blank"
+             
+             # If we don't have a roll number, we should probably still save them for the admin display
+             # but they effectively won't be able to generate a valid certificate if roll is empty.
+             # But let's check the requirement: "Display each team member based on their roll number"...
+             
+             # Let's save them. If roll is None, they just won't be searchable by roll number on the frontend.
+             # But the user specifically asked "If a team member’s roll number is missing or empty, leave that member blank".
+             # This implies we might skip saving them or save as blank?
+             # "Display each team member based on their roll number" - this suggests roll number is key.
+             
+             # The sync.py ensures we only add members if they have a roll number OR name.
+             # But revised sync.py logic I just wrote:
+             # if not member_name or not member_roll: continue
+             # So we are GUARANTEED to have a roll number coming in from sync.py
+             
+             # But for robustness, let's look at `member_roll`.
+             # If member has no roll number (from legacy calls maybe), we fallback to leader? NO. 
+             # Requirement: "Do not auto-fill, copy, or assume roll numbers for missing team members"
+             
+             final_roll = member_roll if member_roll else f"NO_ROLL_{roll_no}_{idx}" # Fallback placeholder just for DB constraint if any
+             
+             # Actually, roll_no column is NOT NULL in schema?
+             # Let's check schema: roll_no TEXT NOT NULL
+             # So we MUST provide a roll number.
+             # If sync.py filtered them out, we are good.
+             # If we are here, we must have a roll number.
+             
+             if not member_roll:
+                 # If clean sync logic is used, this won't happen.
+                 # If it does happen, we skip saving this member to DB because we can't violate NOT NULL
+                 continue
+
+             cursor.execute("""
                 INSERT INTO participants (
                     roll_no, name, department, year, event, sheet_source, 
                     member_role, leader_roll_no, member_position
                 ) VALUES (?, ?, ?, ?, ?, ?, 'member', ?, ?)
-            """, (member_roll, member_name, dept, year, event, sheet_source, roll_no, idx))
+            """, (final_roll, member_name, dept, year, event, sheet_source, roll_no, idx))
         
     conn.commit()
     conn.close()
