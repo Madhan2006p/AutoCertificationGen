@@ -82,8 +82,8 @@ def sync_data():
             
             for idx, h in enumerate(headers):
                 h_lower = h.lower()
-                # Match patterns like "team member 1", "team member 2", etc.
-                match = re.search(r'team\s*member\s*(\d+)', h_lower)
+                # Match patterns like "team member 1", "member 1", etc.
+                match = re.search(r'(?:team\s*)?member\s*(\d+)', h_lower)
                 if match:
                     member_num = match.group(1)
                     if 'name' in h_lower:
@@ -91,11 +91,12 @@ def sync_data():
                         roll_idx = -1
                         for idx2, h2 in enumerate(headers):
                             h2_lower = h2.lower()
-                            if f'team member {member_num}' in h2_lower.replace('  ', ' ') and ('roll' in h2_lower or 'reg' in h2_lower):
+                            # Check for "team member X" or "member X" paired with roll/reg
+                            if f'member {member_num}' in h2_lower.replace('  ', ' ') and ('roll' in h2_lower or 'reg' in h2_lower):
                                 roll_idx = idx2
                                 break
-                            # Also check format "team member{num}"
-                            if re.search(rf'team\s*member\s*{member_num}', h2_lower) and ('roll' in h2_lower or 'reg' in h2_lower):
+                            # Regex fallback
+                            if re.search(rf'(?:team\s*)?member\s*{member_num}', h2_lower) and ('roll' in h2_lower or 'reg' in h2_lower):
                                 roll_idx = idx2
                                 break
                         team_member_cols.append((idx, roll_idx, member_num))
