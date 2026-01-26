@@ -96,7 +96,6 @@
                             <th class="px-4 py-2">Name</th>
                             <th class="px-4 py-2">Department</th>
                             <th class="px-4 py-2">Year</th>
-                            <th class="px-4 py-2">Team Members</th>
                             <th class="px-4 py-2">Certificate</th>
                             <th class="px-4 py-2 text-center">Show Cert</th>
                         </tr>
@@ -104,43 +103,18 @@
                     <tbody class="divide-y divide-slate-700/50">
                         {% endif %}
 
-                        <tr
-                            class="{% if p.member_role == 'member' %}bg-slate-800/30{% endif %} hover:bg-slate-700/20 transition-colors">
+                        <tr class="hover:bg-slate-700/20 transition-colors">
                             <td class="px-4 py-2 font-mono text-purple-400 text-sm">
-                                {% if p.member_role == 'leader' %}
                                 {{ p.roll_no }}
-                                {% else %}
-                                <span class="text-slate-600 text-xs">↳ {{ p.roll_no }}</span>
-                                {% endif %}
                             </td>
                             <td class="px-4 py-2 text-sm">
-                                {% if p.member_role == 'member' %}
-                                <span class="pl-4 text-blue-300">👤 {{ p.name or '-' }}</span>
-                                {% else %}
                                 <span class="font-semibold">{{ p.name or '-' }}</span>
-                                {% endif %}
                             </td>
                             <td class="px-4 py-2 text-slate-400 text-sm">
-                                {% if p.member_role == 'leader' %}
                                 {{ p.department or '-' }}
-                                {% else %}
-                                <span class="text-slate-600 text-xs">-</span>
-                                {% endif %}
                             </td>
                             <td class="px-4 py-2 text-slate-400 text-sm">
-                                {% if p.member_role == 'leader' %}
                                 {{ p.year or '-' }}
-                                {% else %}
-                                <span class="text-slate-600 text-xs">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-4 py-2 text-sm">
-                                {% if p.member_role == 'leader' and p.team_members %}
-                                <span class="text-slate-500 text-xs">{{ (p.team_members.split(',') | length) }}
-                                    member(s)</span>
-                                {% else %}
-                                <span class="text-slate-600">-</span>
-                                {% endif %}
                             </td>
                             <td class="px-4 py-2">
                                 {% if p.cert_url %}
