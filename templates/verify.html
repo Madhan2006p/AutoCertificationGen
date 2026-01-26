@@ -45,7 +45,7 @@
                         View Certificate
                     </a>
                     {% else %}
-                    <a href="/generate/{{ item.roll_no }}/{{ item.event }}"
+                    <a href="/generate_cert?roll_no={{ item.roll_no }}&event_id={{ item.event }}"
                         onclick="this.innerText='Generating...'; this.classList.add('opacity-75', 'cursor-wait');"
                         class="w-full sm:w-auto px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg shadow-lg shadow-purple-900/20 text-center font-medium transition-all">
                         Generate

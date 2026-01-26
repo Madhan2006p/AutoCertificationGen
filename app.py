@@ -56,7 +56,7 @@ async def verify(request: Request, roll_no: str = Form(...)):
         
     return templates.TemplateResponse("verify.html", {"request": request, "events": clean_events, "roll_no": roll_no})
 
-@app.get("/generate/{roll_no}/{event_id}")
+@app.get("/generate_cert")
 async def generate(request: Request, roll_no: str, event_id: str):
     from backend.database import is_participant_blocked
     
