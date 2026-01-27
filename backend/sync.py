@@ -50,7 +50,7 @@ EVENT_MAPPING = {
     "MARKUS 2K26 -  CODE ADAPT (Responses)": "CODE ADAPT",
     "MARKUS Project Presentation 2k26 (Responses)": "PROJECT PRESENTATION",
     "MARKUS Technical Quiz (Responses)": "TECHNICAL QUIZ",
-    "CHILL & SKILL (Responses)": "CHILL & SKILL",
+    "CHILL & SKILL (Responses)": "MINDSPRINT",
     "UI/UX (Responses)": "UI/UX",
     "Paper (Responses)": "PAPER PRESENTATION",
     "Markus 2k26 - IPL AUCTION (Responses)": "IPL AUCTION"
