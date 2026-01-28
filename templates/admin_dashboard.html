@@ -107,6 +107,7 @@
             {% set ns = namespace(current_event='', event_num=0) %}
             {% for p in participants %}
             {% set clean_event = p.event.replace('(Responses)', '').replace('MARKUS 2K26 - ', '').strip() %}
+            {% if 'CHILL' in clean_event.upper() %}{% set clean_event = 'MINDSPRINT' %}{% endif %}
 
             {% if ns.current_event != p.event %}
             {% set ns.current_event = p.event %}

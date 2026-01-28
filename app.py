@@ -50,7 +50,10 @@ async def verify(request: Request, roll_no: str = Form(...)):
         if e.get("blocked") == 1:
             continue
         # Simplify display name
-        d_name = e["event"].replace("MARKUS 2K26 - ", "").replace("(Responses)", "").strip()
+        if "CHILL" in e["event"].upper():
+            d_name = "MINDSPRINT"
+        else:
+            d_name = e["event"].replace("MARKUS 2K26 - ", "").replace("(Responses)", "").strip()
         e["display_name"] = d_name
         clean_events.append(e)
         
@@ -60,12 +63,23 @@ async def verify(request: Request, roll_no: str = Form(...)):
 async def generate(request: Request, roll_no: str, event_id: str):
     from backend.database import is_participant_blocked
     
+    # Sanitize inputs
+    roll_no = roll_no.strip().upper()
+    
     # Fetch record from DB
     events = get_events_for_roll(roll_no)
     record = next((e for e in events if e["event"] == event_id), None)
     
     if not record:
-        return HTMLResponse("Record not found", status_code=404)
+        # Fallback: Check if event_id is 'MINDSPRINT' but DB has 'CHILL & SKILL' or vice versa
+        # This handles transitional state if DB Sync logic changed
+        if event_id.upper() == "MINDSPRINT":
+            record = next((e for e in events if "CHILL" in e["event"].upper()), None)
+        elif "CHILL" in event_id.upper():
+            record = next((e for e in events if e["event"] == "MINDSPRINT"), None)
+
+    if not record:
+        return HTMLResponse(f"Record not found for {roll_no} - {event_id}", status_code=404)
     
     # Check if blocked by admin
     if record.get("blocked") == 1 or is_participant_blocked(roll_no, event_id):
@@ -77,7 +91,14 @@ async def generate(request: Request, roll_no: str, event_id: str):
     # Generate certificate
     try:
         # Clean event name for display on certificate
-        clean_event_name = record["event"].replace("(Responses)", "").replace("MARKUS 2K26 - ", "").replace("MARKUS ", "").strip()
+        # Replace Chill and Skill with Mindsprint
+        raw_event = record["event"]
+        if "CHILL" in raw_event.upper() and "SKILL" in raw_event.upper():
+            clean_event_name = "MINDSPRINT"
+        elif "MINDSPRINT" in raw_event.upper():
+            clean_event_name = "MINDSPRINT"
+        else:
+            clean_event_name = raw_event.replace("(Responses)", "").replace("MARKUS 2K26 - ", "").replace("MARKUS ", "").strip()
         
         local_path = generate_local_certificate(
             name=record["name"], 
